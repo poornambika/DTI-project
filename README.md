@@ -8,6 +8,13 @@ IDSS (Intelligent Decision Support System) is a modern web-based platform design
 It provides a beautiful futuristic UI with a cosmic intelligence theme 🌌 and helps students, teams, startups, and organizations make smarter project decisions.
 
 :contentReference[oaicite:0]{index=0}
+## 🌐 Live Project Demo
+
+You can view the live project here:
+
+🔗 https://poornambika.github.io/DTI-project/
+
+Experience the full Intelligent Decision Support System (IDSS) with its futuristic UI, project idea generation, analysis dashboard, and smart decision-making features in real time 🚀
 
 ---
 
