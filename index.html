@@ -1,0 +1,2339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IDSS — Intelligent Project Idea Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   IDSS DESIGN SYSTEM — COSMIC INTELLIGENCE THEME
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  --void:       #060818;
+  --deep:       #0a0f1e;
+  --surface:    #0d1428;
+  --glass:      rgba(13,20,40,0.7);
+  --glass2:     rgba(255,255,255,0.04);
+  --glass3:     rgba(255,255,255,0.07);
+  --border:     rgba(255,255,255,0.08);
+  --border2:    rgba(99,212,255,0.2);
+  --teal:       #00d4ff;
+  --teal2:      #00b4d8;
+  --amber:      #ffb347;
+  --green:      #00e5a0;
+  --coral:      #ff6b6b;
+  --violet:     #a78bfa;
+  --text:       #e8f0fe;
+  --text2:      #8899bb;
+  --text3:      #4a5a7a;
+  --glow-teal:  0 0 30px rgba(0,212,255,0.25);
+  --glow-amber: 0 0 30px rgba(255,179,71,0.25);
+  --r:          14px;
+  --r2:         20px;
+  --r3:         28px;
+  --t:          0.25s cubic-bezier(0.4,0,0.2,1);
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { font-size:15px; scroll-behavior:smooth; }
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--void);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── CANVAS BACKGROUND ── */
+#cosmosCanvas {
+  position: fixed; top:0; left:0; width:100%; height:100%;
+  pointer-events:none; z-index:0;
+  opacity: 0.6;
+}
+
+/* ── APP SHELL ── */
+.app { position:relative; z-index:1; display:flex; min-height:100vh; }
+
+/* ══════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════ */
+.sidebar {
+  width: 72px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.25rem 0;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  transition: width var(--t);
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+}
+.sidebar:hover, .sidebar.expanded {
+  width: 220px;
+}
+.sidebar-logo {
+  width: 42px; height: 42px;
+  background: linear-gradient(135deg, var(--teal), var(--violet));
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; font-weight:800; color:white;
+  font-family: 'Syne', sans-serif;
+  flex-shrink: 0;
+  box-shadow: 0 0 20px rgba(0,212,255,0.3);
+  margin-bottom: 2rem;
+  cursor: pointer;
+}
+.sidebar-logo-text {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem; font-weight:800;
+  color: var(--teal);
+  white-space: nowrap;
+  margin-left: .6rem;
+  opacity: 0;
+  transition: opacity var(--t);
+}
+.sidebar:hover .sidebar-logo-text,
+.sidebar.expanded .sidebar-logo-text {
+  opacity: 1;
+}
+.logo-row {
+  display: flex; align-items: center;
+  width: 100%;
+  padding: 0 15px;
+  margin-bottom: 2rem;
+}
+
+.nav-items { display:flex; flex-direction:column; gap:.3rem; width:100%; padding:0 .6rem; flex:1; }
+.nav-btn {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .75rem;
+  border-radius: var(--r);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text2);
+  font-size: .88rem; font-weight:500;
+  cursor: pointer;
+  transition: all var(--t);
+  white-space: nowrap;
+  width: 100%;
+  font-family: inherit;
+  position: relative;
+}
+.nav-btn i { font-size: 1rem; width: 20px; text-align:center; flex-shrink:0; }
+.nav-btn span { opacity:0; transition: opacity var(--t); pointer-events:none; }
+.sidebar:hover .nav-btn span,
+.sidebar.expanded .nav-btn span { opacity:1; }
+.nav-btn:hover { background:var(--glass3); color:var(--text); }
+.nav-btn.active {
+  background: linear-gradient(135deg, rgba(0,212,255,0.12), rgba(167,139,250,0.08));
+  border-color: rgba(0,212,255,0.25);
+  color: var(--teal);
+}
+.nav-btn.active i { filter: drop-shadow(0 0 6px rgba(0,212,255,0.6)); }
+
+.sidebar-bottom { padding:0 .6rem; width:100%; }
+.theme-dots { display:flex; gap:.35rem; justify-content:center; padding:.75rem 0; }
+.tdot {
+  width:14px; height:14px; border-radius:50%; cursor:pointer;
+  border:2px solid transparent; transition: transform var(--t), border-color var(--t);
+}
+.tdot:hover, .tdot.active { transform:scale(1.3); border-color:white; }
+
+/* ══════════════════════════════════════════
+   MAIN AREA
+══════════════════════════════════════════ */
+.main {
+  margin-left: 72px;
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  height: 62px;
+  background: rgba(10,15,30,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 2rem;
+  gap: 1rem;
+  position: sticky; top:0; z-index:50;
+}
+.topbar-title {
+  flex:1;
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem; font-weight:700;
+  color: var(--text);
+}
+.topbar-title span { color: var(--teal); }
+.topbar-actions { display:flex; align-items:center; gap:.75rem; }
+.topbar-pill {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .4rem .9rem;
+  background: var(--glass2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: .83rem; color:var(--text2);
+  cursor:pointer; transition: all var(--t);
+}
+.topbar-pill:hover { border-color:var(--teal); color:var(--teal); }
+.topbar-pill .av { font-size:1.1rem; }
+.notif-ring {
+  width:36px; height:36px; border-radius:50%;
+  background:var(--glass2); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition: all var(--t); position:relative;
+  font-size:.9rem; color:var(--text2);
+}
+.notif-ring:hover { border-color:var(--teal); color:var(--teal); }
+.notif-dot {
+  position:absolute; top:6px; right:6px;
+  width:7px; height:7px; border-radius:50%;
+  background:var(--coral); border:1.5px solid var(--deep);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.4)} }
+
+/* ── PAGE CONTAINER ── */
+.page { display:none; padding:2rem; animation:pageIn .35s ease both; }
+.page.active { display:block; }
+@keyframes pageIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+/* ══════════════════════════════════════════
+   TYPOGRAPHY
+══════════════════════════════════════════ */
+.section-eyebrow {
+  display: inline-flex; align-items:center; gap:.5rem;
+  font-size: .75rem; font-weight:700; letter-spacing:.12em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: .6rem;
+}
+.section-eyebrow::before {
+  content:''; width:18px; height:2px;
+  background: var(--teal); border-radius:1px;
+}
+.page-heading {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--text);
+  margin-bottom: .5rem;
+}
+.page-heading .accent { color: var(--teal); }
+.page-heading .accent2 { color: var(--amber); }
+.page-sub {
+  color: var(--text2);
+  font-size: .95rem;
+  line-height: 1.7;
+  max-width: 600px;
+}
+
+/* ══════════════════════════════════════════
+   GLASS CARDS
+══════════════════════════════════════════ */
+.glass-card {
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--r3);
+  overflow: hidden;
+  transition: border-color var(--t), box-shadow var(--t);
+}
+.glass-card:hover {
+  border-color: rgba(0,212,255,0.2);
+  box-shadow: 0 8px 40px rgba(0,212,255,0.06);
+}
+.card-head {
+  padding:1.25rem 1.5rem;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.card-head h3 {
+  font-family:'Syne',sans-serif;
+  font-size:.95rem; font-weight:700;
+  display:flex; align-items:center; gap:.5rem;
+  color:var(--text);
+}
+.card-head h3 i { color:var(--teal); }
+.card-body { padding:1.25rem 1.5rem; }
+.card-link {
+  font-size:.8rem; color:var(--teal); font-weight:600;
+  background:none; border:none; cursor:pointer; font-family:inherit;
+  transition:opacity var(--t);
+}
+.card-link:hover { opacity:.7; }
+
+/* ══════════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════════ */
+.btn {
+  display:inline-flex; align-items:center; gap:.5rem;
+  padding:.7rem 1.5rem;
+  border-radius: var(--r);
+  font-size:.9rem; font-weight:700;
+  font-family:inherit;
+  cursor:pointer; border:none;
+  transition: all var(--t);
+  white-space:nowrap;
+  position:relative; overflow:hidden;
+}
+.btn::after {
+  content:''; position:absolute; inset:0;
+  background:rgba(255,255,255,0);
+  transition:background var(--t);
+}
+.btn:hover::after { background:rgba(255,255,255,0.05); }
+
+.btn-primary {
+  background: linear-gradient(135deg, #00b4d8, #0077b6);
+  color:white;
+  box-shadow: 0 4px 20px rgba(0,180,216,0.3);
+}
+.btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(0,180,216,0.4); }
+
+.btn-amber {
+  background: linear-gradient(135deg, var(--amber), #ff8c00);
+  color:#1a0800;
+  box-shadow: 0 4px 20px rgba(255,179,71,0.3);
+}
+.btn-amber:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(255,179,71,0.45); }
+
+.btn-ghost {
+  background: var(--glass2);
+  border: 1px solid var(--border);
+  color:var(--text2);
+}
+.btn-ghost:hover { border-color:var(--teal); color:var(--teal); background:rgba(0,212,255,0.05); }
+
+.btn-sm {
+  padding: .45rem 1rem;
+  font-size:.82rem;
+  border-radius: var(--r);
+}
+.btn-xs {
+  padding:.35rem .75rem;
+  font-size:.78rem;
+  border-radius:8px;
+}
+.btn-full { width:100%; justify-content:center; }
+
+/* ══════════════════════════════════════════
+   STATS
+══════════════════════════════════════════ */
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.75rem; }
+.stat-tile {
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 1.3rem 1.4rem;
+  position:relative; overflow:hidden;
+  transition: transform var(--t), box-shadow var(--t), border-color var(--t);
+  cursor:default;
+}
+.stat-tile:hover { transform:translateY(-3px); box-shadow:var(--glow-teal); border-color:var(--border2); }
+.stat-tile-icon {
+  width:44px; height:44px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.2rem; margin-bottom:.85rem;
+}
+.ic-teal  { background:rgba(0,212,255,0.12); color:var(--teal); }
+.ic-amber { background:rgba(255,179,71,0.12); color:var(--amber); }
+.ic-green { background:rgba(0,229,160,0.12); color:var(--green); }
+.ic-violet{ background:rgba(167,139,250,0.12); color:var(--violet); }
+.stat-tile-val {
+  font-family:'Syne',sans-serif;
+  font-size:2rem; font-weight:800; line-height:1;
+  color:var(--text); margin-bottom:.25rem;
+}
+.stat-tile-lbl { font-size:.8rem; color:var(--text2); }
+.stat-tile-bg {
+  position:absolute; right:-8px; bottom:-8px;
+  font-size:4.5rem; opacity:.04; pointer-events:none;
+}
+.stat-tile-bar {
+  position:absolute; bottom:0; left:0; height:2px; border-radius:1px;
+  transition: width 1.2s ease;
+}
+.bar-teal  { background:var(--teal); }
+.bar-amber { background:var(--amber); }
+.bar-green { background:var(--green); }
+.bar-violet{ background:var(--violet); }
+
+/* ══════════════════════════════════════════
+   HOME PAGE
+══════════════════════════════════════════ */
+.home-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+  min-height: calc(100vh - 62px - 4rem);
+  padding: 2rem 0;
+}
+.hero-left {}
+.hero-badge {
+  display:inline-flex; align-items:center; gap:.5rem;
+  padding:.35rem .9rem;
+  background:rgba(0,212,255,0.08);
+  border:1px solid rgba(0,212,255,0.2);
+  border-radius:999px; font-size:.78rem; color:var(--teal); font-weight:600;
+  margin-bottom:1.5rem;
+}
+.hero-badge::before { content:'✦'; font-size:.6rem; }
+.hero-h1 {
+  font-family:'Syne',sans-serif;
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight:800; line-height:1.1;
+  color:var(--text);
+  margin-bottom:1.25rem;
+}
+.hero-h1 .line2 { color:var(--teal); display:block; }
+.hero-h1 .line3 { color:var(--text2); font-weight:400; font-size:70%; display:block; font-family:'Plus Jakarta Sans',sans-serif; margin-top:.4rem; line-height:1.5; }
+.hero-ctas { display:flex; gap:1rem; flex-wrap:wrap; margin-top:2rem; }
+.hero-features {
+  display:flex; gap:1.5rem; flex-wrap:wrap;
+  margin-top:2rem; padding-top:2rem;
+  border-top:1px solid var(--border);
+}
+.hf-item {
+  display:flex; align-items:center; gap:.5rem;
+  font-size:.82rem; color:var(--text2);
+}
+.hf-item i { color:var(--teal); }
+
+.hero-right { position:relative; display:flex; align-items:center; justify-content:center; }
+.hero-visual {
+  width:100%; max-width:480px;
+  aspect-ratio:1;
+  position:relative;
+}
+
+/* ── ORBS & FLOATING ELEMENTS ── */
+.orb {
+  position:absolute; border-radius:50%;
+  filter: blur(60px);
+  pointer-events:none;
+  animation: orbFloat 8s ease-in-out infinite;
+}
+.orb1 { width:200px;height:200px; background:rgba(0,212,255,0.18); top:10%;left:20%; animation-delay:0s; }
+.orb2 { width:160px;height:160px; background:rgba(167,139,250,0.15); bottom:15%;right:10%; animation-delay:3s; }
+.orb3 { width:100px;height:100px; background:rgba(255,179,71,0.12); top:50%;left:60%; animation-delay:1.5s; }
+@keyframes orbFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+
+/* ══════════════════════════════════════════
+   HOW IT WORKS SECTION
+══════════════════════════════════════════ */
+.steps-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-top:2rem; }
+.step-card {
+  background:var(--glass);
+  backdrop-filter:blur(16px);
+  border:1px solid var(--border);
+  border-radius:var(--r2);
+  padding:1.5rem 1.25rem;
+  text-align:center;
+  transition:all var(--t);
+  cursor:default; position:relative;
+}
+.step-card::after {
+  content:''; position:absolute;
+  top:50%; right:-1px; transform:translateY(-50%);
+  width:2px; height:40%; background:linear-gradient(to bottom,transparent,var(--border),transparent);
+}
+.step-card:last-child::after { display:none; }
+.step-card:hover { transform:translateY(-4px); border-color:rgba(0,212,255,0.25); }
+.step-num {
+  width:48px; height:48px; border-radius:50%;
+  background:linear-gradient(135deg, rgba(0,212,255,0.15), rgba(167,139,250,0.1));
+  border:1px solid rgba(0,212,255,0.2);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:800; color:var(--teal);
+  margin:0 auto 1rem;
+}
+.step-title { font-family:'Syne',sans-serif; font-size:.95rem; font-weight:700; color:var(--text); margin-bottom:.4rem; }
+.step-desc { font-size:.82rem; color:var(--text2); line-height:1.6; }
+.step-icon { font-size:1.5rem; margin-bottom:.75rem; }
+
+/* ══════════════════════════════════════════
+   TOPIC SELECTOR PAGE
+══════════════════════════════════════════ */
+.topic-layout { display:grid; grid-template-columns:1fr 1fr; gap:2rem; align-items:start; }
+.topic-form-area {}
+
+.topic-categories {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:.75rem;
+  margin-bottom:1.5rem;
+}
+.cat-tile {
+  background:var(--glass2);
+  border:1.5px solid var(--border);
+  border-radius:var(--r2);
+  padding:1rem .85rem;
+  text-align:center;
+  cursor:pointer;
+  transition:all var(--t);
+  position:relative; overflow:hidden;
+}
+.cat-tile::before {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg,var(--teal),var(--violet));
+  opacity:0; transition:opacity var(--t);
+}
+.cat-tile:hover::before,.cat-tile.selected::before { opacity:.08; }
+.cat-tile:hover,.cat-tile.selected { border-color:var(--teal); transform:translateY(-2px); }
+.cat-tile.selected { border-color:var(--teal); box-shadow:0 0 0 1px rgba(0,212,255,0.3); }
+.cat-tile-icon { font-size:1.6rem; margin-bottom:.4rem; display:block; }
+.cat-tile-label { font-size:.8rem; font-weight:600; color:var(--text2); }
+.cat-tile.selected .cat-tile-label { color:var(--teal); }
+
+.form-field { margin-bottom:1.25rem; }
+.field-label {
+  display:flex; align-items:center; gap:.4rem;
+  font-size:.82rem; font-weight:600; color:var(--text2);
+  margin-bottom:.5rem; text-transform:uppercase; letter-spacing:.06em;
+}
+.field-label i { color:var(--teal); font-size:.8rem; }
+.text-input {
+  width:100%; padding:.8rem 1.1rem;
+  background:var(--glass2); border:1.5px solid var(--border);
+  border-radius:var(--r); color:var(--text);
+  font-size:.92rem; font-family:inherit;
+  transition:all var(--t);
+}
+.text-input::placeholder { color:var(--text3); }
+.text-input:focus { outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(0,212,255,0.1); background:rgba(0,212,255,0.03); }
+textarea.text-input { resize:vertical; min-height:90px; }
+.select-input {
+  width:100%; padding:.8rem 2.5rem .8rem 1.1rem;
+  background:var(--glass2); border:1.5px solid var(--border);
+  border-radius:var(--r); color:var(--text);
+  font-size:.92rem; font-family:inherit;
+  -webkit-appearance:none; appearance:none;
+  cursor:pointer; transition:all var(--t);
+  background-image:url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300d4ff' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 1rem center;
+}
+.select-input:focus { outline:none; border-color:var(--teal); box-shadow:0 0 0 3px rgba(0,212,255,0.1); }
+.select-input option { background:var(--surface); }
+
+.tag-row { display:flex; flex-wrap:wrap; gap:.5rem; }
+.tag-chip {
+  padding:.38rem .85rem;
+  background:var(--glass2); border:1.5px solid var(--border);
+  border-radius:999px; font-size:.8rem; font-weight:600;
+  color:var(--text2); cursor:pointer; transition:all var(--t);
+}
+.tag-chip:hover,.tag-chip.selected {
+  border-color:var(--teal); color:var(--teal);
+  background:rgba(0,212,255,0.06);
+}
+.tag-chip.selected { background:rgba(0,212,255,0.1); }
+
+.preview-panel {
+  background:var(--glass);
+  backdrop-filter:blur(20px);
+  border:1px solid var(--border);
+  border-radius:var(--r3);
+  padding:1.75rem;
+  position:sticky; top:80px;
+}
+.preview-title {
+  font-family:'Syne',sans-serif; font-size:1rem; font-weight:700;
+  color:var(--text); margin-bottom:1.25rem;
+  display:flex; align-items:center; gap:.5rem;
+}
+.preview-title::before { content:''; width:3px; height:18px; background:var(--teal); border-radius:2px; }
+.preview-tags { display:flex; flex-wrap:wrap; gap:.4rem; margin-bottom:1rem; }
+.preview-tag {
+  padding:.25rem .65rem; border-radius:6px;
+  font-size:.75rem; font-weight:600;
+}
+.preview-stat-rows { display:flex; flex-direction:column; gap:.6rem; }
+.psr { display:flex; justify-content:space-between; align-items:center; font-size:.83rem; }
+.psr-key { color:var(--text2); }
+.psr-val { font-weight:700; color:var(--text); }
+.complexity-meter {
+  height:6px; background:var(--glass2); border-radius:3px; overflow:hidden; flex:1; margin:0 .75rem;
+}
+.cm-fill { height:100%; border-radius:3px; transition:width .8s ease; }
+.separator { height:1px; background:var(--border); margin:1.25rem 0; }
+.insight-box {
+  background:rgba(0,212,255,0.05);
+  border:1px solid rgba(0,212,255,0.15);
+  border-radius:var(--r); padding:.9rem 1rem;
+  font-size:.82rem; color:var(--text2); line-height:1.65;
+}
+.insight-box strong { color:var(--teal); }
+
+/* ══════════════════════════════════════════
+   IDEAS PAGE
+══════════════════════════════════════════ */
+.ideas-intro {
+  display:grid; grid-template-columns:1fr 400px; gap:2rem;
+  align-items:center; margin-bottom:2rem;
+  padding:1.75rem 2rem;
+  background:var(--glass);
+  backdrop-filter:blur(16px);
+  border:1px solid var(--border);
+  border-radius:var(--r3);
+}
+.ideas-meta-pills { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.75rem; }
+.mpill {
+  display:inline-flex; align-items:center; gap:.4rem;
+  padding:.3rem .75rem; border-radius:999px;
+  background:var(--glass2); border:1px solid var(--border);
+  font-size:.78rem; color:var(--text2);
+}
+.mpill i { color:var(--teal); font-size:.7rem; }
+.ideas-viz { display:flex; align-items:center; justify-content:center; }
+
+.ideas-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:1.25rem; }
+.idea-card {
+  background:var(--glass);
+  backdrop-filter:blur(16px);
+  border:1.5px solid var(--border);
+  border-radius:var(--r3);
+  padding:1.5rem;
+  display:flex; flex-direction:column; gap:1rem;
+  transition:all var(--t);
+  position:relative; overflow:hidden;
+  cursor:default;
+}
+.idea-card:hover {
+  transform:translateY(-4px);
+  border-color:rgba(0,212,255,0.3);
+  box-shadow:0 12px 40px rgba(0,212,255,0.08);
+}
+.idea-card.champion {
+  border-color:rgba(255,179,71,0.4);
+  background:linear-gradient(135deg, rgba(255,179,71,0.05) 0%, var(--glass) 100%);
+}
+.idea-card.champion:hover { border-color:var(--amber); box-shadow:0 12px 40px rgba(255,179,71,0.1); }
+.champion-ribbon {
+  position:absolute; top:0; right:0;
+  background:linear-gradient(135deg,var(--amber),#ff8c00);
+  color:#1a0800; font-size:.68rem; font-weight:800;
+  padding:.3rem .85rem;
+  border-radius:0 var(--r3) 0 var(--r3);
+  letter-spacing:.04em;
+}
+.idea-rank {
+  display:flex; align-items:center; justify-content:space-between;
+}
+.rank-num {
+  width:34px; height:34px; border-radius:50%;
+  background:var(--glass2); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Syne',sans-serif; font-size:.85rem; font-weight:800;
+  color:var(--text2);
+}
+.champion .rank-num { background:rgba(255,179,71,0.15); border-color:rgba(255,179,71,0.3); color:var(--amber); }
+.score-donut { position:relative; width:52px; height:52px; }
+.score-donut svg { width:52px; height:52px; transform:rotate(-90deg); }
+.donut-bg { fill:none; stroke:rgba(255,255,255,0.06); stroke-width:4; }
+.donut-fill { fill:none; stroke:var(--teal); stroke-width:4; stroke-linecap:round; transition:stroke-dasharray 1s ease; }
+.champion .donut-fill { stroke:var(--amber); }
+.donut-txt {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Syne',sans-serif; font-size:.82rem; font-weight:800; color:var(--text);
+}
+
+.idea-title {
+  font-family:'Syne',sans-serif; font-size:1.05rem; font-weight:800;
+  color:var(--text); line-height:1.3;
+}
+.idea-desc { font-size:.84rem; color:var(--text2); line-height:1.7; flex:1; }
+
+.idea-tags-row { display:flex; flex-wrap:wrap; gap:.35rem; }
+.itag {
+  padding:.2rem .55rem; border-radius:6px;
+  background:rgba(255,255,255,0.04); border:1px solid var(--border);
+  font-size:.72rem; color:var(--text2); font-weight:500;
+}
+.champion .itag { background:rgba(255,179,71,0.06); border-color:rgba(255,179,71,0.15); color:rgba(255,179,71,0.8); }
+
+.criteria-bars { display:flex; flex-direction:column; gap:.5rem; }
+.cbar-row { display:flex; align-items:center; gap:.6rem; font-size:.78rem; }
+.cbar-lbl { width:28px; color:var(--text2); flex-shrink:0; }
+.cbar-track { flex:1; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; }
+.cbar-fill { height:100%; border-radius:2px; transition:width .9s ease; }
+.cbar-val { width:20px; text-align:right; font-weight:700; color:var(--text); }
+
+.idea-footer {
+  display:flex; gap:.6rem;
+  padding-top:.85rem; border-top:1px solid var(--border);
+}
+
+/* ══════════════════════════════════════════
+   RESULTS / ANALYSIS PAGE
+══════════════════════════════════════════ */
+.winner-banner {
+  background:linear-gradient(135deg, rgba(255,179,71,0.08) 0%, rgba(167,139,250,0.06) 50%, rgba(0,212,255,0.06) 100%);
+  border:1px solid rgba(255,179,71,0.25);
+  border-radius:var(--r3);
+  padding:1.75rem 2rem;
+  display:flex; align-items:center; gap:2rem;
+  margin-bottom:1.75rem;
+  position:relative; overflow:hidden;
+}
+.winner-banner::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg,transparent,var(--amber),var(--teal),transparent);
+}
+.winner-icon { font-size:3rem; flex-shrink:0; animation:float 3s ease-in-out infinite; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+.winner-info { flex:1; }
+.winner-eyebrow { font-size:.72rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--amber); margin-bottom:.4rem; }
+.winner-name {
+  font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:800; color:var(--text);
+  margin-bottom:.4rem; line-height:1.2;
+}
+.winner-desc { font-size:.88rem; color:var(--text2); line-height:1.65; max-width:500px; }
+.winner-score { text-align:center; flex-shrink:0; }
+.ws-big {
+  font-family:'Syne',sans-serif; font-size:3.5rem; font-weight:800;
+  color:var(--amber); line-height:1;
+}
+.ws-big sub { font-size:1.2rem; color:var(--text2); vertical-align:middle; }
+.ws-lbl { font-size:.78rem; color:var(--text2); margin-top:.2rem; }
+
+.charts-grid { display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:1.25rem; margin-bottom:1.75rem; }
+
+.result-table-wrap {
+  background:var(--glass); backdrop-filter:blur(16px);
+  border:1px solid var(--border); border-radius:var(--r3);
+  overflow:hidden;
+}
+.rt-header {
+  padding:1.1rem 1.5rem; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; gap:1rem;
+}
+.rt-search {
+  display:flex; align-items:center; gap:.5rem;
+  background:var(--glass2); border:1px solid var(--border);
+  border-radius:var(--r); padding:.45rem .9rem;
+}
+.rt-search input {
+  border:none; background:none; color:var(--text);
+  font-size:.85rem; font-family:inherit; outline:none; width:160px;
+}
+.rt-search input::placeholder { color:var(--text3); }
+table.dtable { width:100%; border-collapse:collapse; font-size:.85rem; }
+table.dtable th {
+  padding:.7rem 1.1rem; text-align:left;
+  font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--text2); background:rgba(0,0,0,0.2);
+  border-bottom:1px solid var(--border); cursor:pointer;
+  white-space:nowrap; user-select:none;
+}
+table.dtable th:hover { color:var(--teal); }
+table.dtable td { padding:.8rem 1.1rem; border-bottom:1px solid rgba(255,255,255,0.03); vertical-align:middle; }
+table.dtable tr:last-child td { border-bottom:none; }
+table.dtable tr:hover td { background:rgba(0,212,255,0.02); }
+table.dtable tr.champ-row td { background:rgba(255,179,71,0.04); }
+.rank-badge-tbl {
+  width:28px; height:28px; border-radius:50%;
+  background:var(--glass2); color:var(--text2);
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; font-size:.8rem;
+}
+.champ-row .rank-badge-tbl { background:rgba(255,179,71,0.15); color:var(--amber); }
+.sb-cell { display:flex; align-items:center; gap:.5rem; }
+.sb-bar { width:48px; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; }
+.sb-bar div { height:100%; border-radius:2px; }
+.total-val { font-family:'Syne',sans-serif; font-size:1rem; font-weight:800; color:var(--teal); }
+.champ-row .total-val { color:var(--amber); }
+.status-chip {
+  padding:.2rem .6rem; border-radius:6px;
+  font-size:.72rem; font-weight:700;
+}
+.sc-best { background:rgba(255,179,71,0.12); color:var(--amber); }
+.sc-opt  { background:rgba(255,255,255,0.04); color:var(--text2); }
+
+/* ══════════════════════════════════════════
+   HISTORY PAGE
+══════════════════════════════════════════ */
+.hist-filters {
+  display:flex; flex-wrap:wrap; gap:.75rem; margin-bottom:1.5rem;
+  align-items:center;
+}
+.filter-search {
+  display:flex; align-items:center; gap:.5rem;
+  background:var(--glass); border:1px solid var(--border);
+  border-radius:var(--r); padding:.55rem 1rem; flex:1; max-width:300px;
+}
+.filter-search input { border:none; background:none; color:var(--text); font-family:inherit; font-size:.88rem; outline:none; width:100%; }
+.filter-search input::placeholder { color:var(--text3); }
+.filter-search i { color:var(--text3); }
+
+.history-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:1.25rem; }
+.hcard {
+  background:var(--glass); backdrop-filter:blur(16px);
+  border:1.5px solid var(--border); border-radius:var(--r3);
+  padding:1.4rem; display:flex; flex-direction:column; gap:.9rem;
+  transition:all var(--t);
+}
+.hcard:hover { border-color:rgba(0,212,255,0.2); transform:translateY(-2px); box-shadow:0 8px 32px rgba(0,212,255,0.06); }
+.hcard-top { display:flex; justify-content:space-between; align-items:flex-start; gap:.5rem; }
+.hcard-cats { display:flex; gap:.4rem; flex-wrap:wrap; }
+.hcard-date { font-size:.75rem; color:var(--text3); white-space:nowrap; flex-shrink:0; }
+.hcard-title { font-family:'Syne',sans-serif; font-size:1rem; font-weight:800; color:var(--text); line-height:1.3; }
+.hcard-desc { font-size:.82rem; color:var(--text2); line-height:1.6; }
+.hcard-winner {
+  display:flex; align-items:center; gap:.6rem;
+  background:rgba(255,179,71,0.06); border:1px solid rgba(255,179,71,0.15);
+  border-radius:var(--r); padding:.55rem .85rem; font-size:.82rem; flex-wrap:wrap;
+}
+.hw-lbl { font-weight:700; color:var(--amber); flex-shrink:0; }
+.hw-name { color:var(--text); flex:1; }
+.hw-score {
+  background:var(--amber); color:#1a0800;
+  padding:.1rem .5rem; border-radius:999px; font-size:.72rem; font-weight:800;
+  flex-shrink:0;
+}
+.hcard-stats { display:flex; gap:1.25rem; flex-wrap:wrap; }
+.hstat { display:flex; align-items:center; gap:.35rem; font-size:.78rem; color:var(--text2); }
+.hstat i { color:var(--teal); font-size:.72rem; }
+.hcard-actions { display:flex; gap:.5rem; padding-top:.6rem; border-top:1px solid var(--border); }
+
+/* ══════════════════════════════════════════
+   TEAM VOTE PAGE
+══════════════════════════════════════════ */
+.team-header-card {
+  background:linear-gradient(135deg, rgba(0,212,255,0.06), rgba(167,139,250,0.04));
+  border:1px solid rgba(0,212,255,0.15); border-radius:var(--r3);
+  padding:2rem; margin-bottom:1.75rem;
+  display:grid; grid-template-columns:1fr auto; align-items:center; gap:2rem;
+}
+.voting-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:1.25rem; }
+.vcard {
+  background:var(--glass); backdrop-filter:blur(16px);
+  border:1.5px solid var(--border); border-radius:var(--r3);
+  overflow:hidden; transition:all var(--t);
+}
+.vcard:hover { border-color:rgba(0,212,255,0.2); }
+.vcard.my-voted { border-color:rgba(0,229,160,0.3); }
+.vc-body { padding:1.3rem; }
+.vc-body h3 { font-family:'Syne',sans-serif; font-size:.95rem; font-weight:800; color:var(--text); margin-bottom:.5rem; }
+.vc-body p { font-size:.83rem; color:var(--text2); line-height:1.65; margin-bottom:.85rem; }
+.vote-meter {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:.6rem; font-size:.8rem;
+}
+.vm-label { color:var(--text2); display:flex; align-items:center; gap:.35rem; }
+.vm-label i { color:var(--teal); }
+.vm-count { font-weight:800; color:var(--text); font-family:'Syne',sans-serif; }
+.vote-bar-track { height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden; }
+.vote-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--teal),var(--violet)); transition:width .9s ease; }
+.vc-footer { padding:.9rem 1.3rem; border-top:1px solid var(--border); background:rgba(0,0,0,0.15); }
+.btn-vote-action {
+  width:100%; padding:.65rem; border-radius:var(--r);
+  font-family:inherit; font-size:.88rem; font-weight:700; cursor:pointer;
+  border:none; display:flex; align-items:center; justify-content:center; gap:.5rem;
+  transition:all var(--t);
+  background:linear-gradient(135deg,rgba(0,212,255,0.12),rgba(167,139,250,0.08));
+  border:1px solid rgba(0,212,255,0.2); color:var(--teal);
+}
+.btn-vote-action:hover { background:rgba(0,212,255,0.18); transform:translateY(-1px); }
+.btn-voted-done {
+  width:100%; padding:.65rem; border-radius:var(--r);
+  background:rgba(0,229,160,0.08); border:1px solid rgba(0,229,160,0.2);
+  color:var(--green); font-family:inherit; font-size:.88rem; font-weight:700;
+  display:flex; align-items:center; justify-content:center; gap:.5rem;
+}
+
+/* ══════════════════════════════════════════
+   PROFILE PAGE
+══════════════════════════════════════════ */
+.profile-layout { display:grid; grid-template-columns:300px 1fr; gap:1.5rem; align-items:start; }
+.profile-card {
+  background:var(--glass); backdrop-filter:blur(16px);
+  border:1px solid var(--border); border-radius:var(--r3);
+  padding:2rem 1.5rem; text-align:center;
+  position:sticky; top:80px;
+}
+.profile-av-wrap { position:relative; display:inline-block; margin-bottom:1rem; }
+.profile-av { font-size:4.5rem; display:block; }
+.profile-av-ring {
+  position:absolute; inset:-6px; border-radius:50%;
+  border:2px solid transparent;
+  background:linear-gradient(135deg,var(--teal),var(--violet)) border-box;
+  -webkit-mask:linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite:destination-out; mask-composite:exclude;
+  animation:spin 8s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+.profile-name { font-family:'Syne',sans-serif; font-size:1.25rem; font-weight:800; color:var(--text); }
+.profile-handle { color:var(--text2); font-size:.85rem; margin-top:.15rem; }
+.profile-role { display:inline-block; margin:.75rem auto; padding:.3rem .9rem; border-radius:999px; font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; background:rgba(0,212,255,0.1); border:1px solid rgba(0,212,255,0.2); color:var(--teal); }
+.profile-stats { display:flex; justify-content:center; gap:1.75rem; margin:1.25rem 0; padding:1.25rem 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+.pstat-val { font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:800; color:var(--text); }
+.pstat-lbl { font-size:.72rem; color:var(--text2); margin-top:.1rem; }
+.profile-info { text-align:left; margin-top:1rem; display:flex; flex-direction:column; gap:.5rem; }
+.pinfo-row { display:flex; align-items:center; gap:.5rem; font-size:.82rem; color:var(--text2); }
+.pinfo-row i { color:var(--teal); width:16px; flex-shrink:0; }
+
+.profile-main { display:flex; flex-direction:column; gap:1.25rem; }
+.avatar-grid { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.5rem; }
+.av-opt input { display:none; }
+.av-opt span {
+  display:flex; align-items:center; justify-content:center;
+  width:44px; height:44px; border-radius:12px;
+  border:1.5px solid var(--border); cursor:pointer;
+  font-size:1.3rem; transition:all var(--t);
+  background:var(--glass2);
+}
+.av-opt input:checked + span { border-color:var(--teal); background:rgba(0,212,255,0.1); transform:scale(1.1); box-shadow:0 0 12px rgba(0,212,255,0.2); }
+.av-opt span:hover { border-color:var(--teal); transform:scale(1.05); }
+
+/* ══════════════════════════════════════════
+   ADMIN PAGE
+══════════════════════════════════════════ */
+.admin-alert {
+  background:rgba(255,179,71,0.06); border:1px solid rgba(255,179,71,0.2);
+  border-radius:var(--r); padding:.75rem 1rem;
+  font-size:.83rem; color:var(--amber); display:flex; align-items:center; gap:.5rem;
+  margin-bottom:1.5rem;
+}
+
+/* ══════════════════════════════════════════
+   CATEGORY BADGE SYSTEM
+══════════════════════════════════════════ */
+.cb { padding:.22rem .6rem; border-radius:6px; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
+.cb-education { background:rgba(167,139,250,0.12); color:#a78bfa; }
+.cb-technology { background:rgba(0,212,255,0.1); color:var(--teal); }
+.cb-business { background:rgba(255,179,71,0.1); color:var(--amber); }
+.cb-health { background:rgba(255,107,107,0.1); color:var(--coral); }
+.cb-environment { background:rgba(0,229,160,0.1); color:var(--green); }
+.cb-social { background:rgba(255,200,80,0.1); color:#ffc850; }
+.cb-finance { background:rgba(99,212,255,0.1); color:#63d4ff; }
+.cb-other { background:var(--glass2); color:var(--text2); }
+.pb { padding:.22rem .6rem; border-radius:6px; font-size:.72rem; font-weight:700; text-transform:capitalize; }
+.pb-low { background:rgba(255,255,255,0.04); color:var(--text3); }
+.pb-medium { background:rgba(255,179,71,0.08); color:var(--amber); }
+.pb-high { background:rgba(255,107,107,0.1); color:var(--coral); }
+.pb-critical { background:rgba(167,139,250,0.15); color:var(--violet); }
+
+/* ══════════════════════════════════════════
+   UTILITIES
+══════════════════════════════════════════ */
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; }
+.flex-row { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; }
+.text-teal { color:var(--teal); }
+.text-amber { color:var(--amber); }
+.text-muted { color:var(--text2); }
+.fw-800 { font-weight:800; }
+.mb-05 { margin-bottom:.5rem; }
+.mb-1 { margin-bottom:1rem; }
+.mb-15 { margin-bottom:1.5rem; }
+.mb-2 { margin-bottom:2rem; }
+.mt-1 { margin-top:1rem; }
+
+.empty-state {
+  text-align:center; padding:4rem 2rem;
+  color:var(--text2);
+}
+.empty-icon { font-size:3.5rem; margin-bottom:1rem; opacity:.6; }
+.empty-title { font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:700; color:var(--text); margin-bottom:.5rem; }
+
+/* ── TOAST ── */
+.toast-container { position:fixed; bottom:1.5rem; right:1.5rem; z-index:9999; display:flex; flex-direction:column; gap:.5rem; }
+.toast {
+  display:flex; align-items:center; gap:.75rem;
+  padding:.8rem 1.1rem;
+  background:rgba(13,20,40,0.95); backdrop-filter:blur(20px);
+  border:1px solid var(--border); border-radius:var(--r);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  font-size:.88rem; color:var(--text); min-width:280px;
+  animation:toastIn .3s ease;
+}
+.toast.removing { animation:toastOut .3s ease forwards; }
+@keyframes toastIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+@keyframes toastOut { to{opacity:0;transform:translateX(20px)} }
+.toast-icon { font-size:1.1rem; flex-shrink:0; }
+.toast-bar { position:absolute; bottom:0; left:0; height:2px; border-radius:1px; background:var(--teal); animation:toastProgress 3s linear forwards; }
+@keyframes toastProgress { from{width:100%} to{width:0} }
+
+/* ── ALERT ── */
+.alert { padding:.85rem 1.1rem; border-radius:var(--r); margin-bottom:1.25rem; display:flex; align-items:center; gap:.6rem; font-size:.88rem; font-weight:500; }
+.alert-success { background:rgba(0,229,160,0.07); border:1px solid rgba(0,229,160,0.2); color:var(--green); }
+.alert-error { background:rgba(255,107,107,0.07); border:1px solid rgba(255,107,107,0.2); color:var(--coral); }
+.alert-info { background:rgba(0,212,255,0.07); border:1px solid rgba(0,212,255,0.2); color:var(--teal); }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:999px; }
+::-webkit-scrollbar-thumb:hover { background:rgba(0,212,255,0.4); }
+
+/* ── LOADING ── */
+#loadingScreen {
+  position:fixed; inset:0; background:var(--void); z-index:9999;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.5rem;
+  transition:opacity .5s;
+}
+#loadingScreen.hide { opacity:0; pointer-events:none; }
+.load-logo { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; color:var(--teal); }
+.load-bar { width:200px; height:3px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; }
+.load-fill { height:100%; background:linear-gradient(90deg,var(--teal),var(--violet)); border-radius:2px; animation:loadAnim 1.2s ease forwards; }
+@keyframes loadAnim { from{width:0} to{width:100%} }
+.load-txt { font-size:.82rem; color:var(--text2); }
+
+/* ── SECTION DIVIDER ── */
+.section-divider { height:1px; background:linear-gradient(90deg,transparent,var(--border),transparent); margin:2rem 0; }
+
+/* ── FORM STEPS ── */
+.form-steps { display:flex; align-items:center; gap:0; margin-bottom:2rem; }
+.fstep { display:flex; align-items:center; gap:.5rem; font-size:.8rem; font-weight:600; color:var(--text2); white-space:nowrap; }
+.fstep .fnum { width:26px; height:26px; border-radius:50%; background:var(--glass2); border:1.5px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:.78rem; font-weight:800; }
+.fstep.active { color:var(--teal); }
+.fstep.active .fnum { background:rgba(0,212,255,0.12); border-color:var(--teal); color:var(--teal); }
+.fstep.done .fnum { background:var(--green); border-color:var(--green); color:var(--void); }
+.fstep.done { color:var(--green); }
+.fline { flex:1; height:1.5px; background:var(--border); min-width:20px; }
+
+/* ── INSIGHTS CARDS ── */
+.insights-row { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-top:1.5rem; }
+.insight-tile {
+  background:var(--glass2); border:1px solid var(--border);
+  border-radius:var(--r2); padding:1.1rem;
+  text-align:center; transition:all var(--t);
+}
+.insight-tile:hover { border-color:rgba(0,212,255,0.2); }
+.insight-tile-icon { font-size:1.6rem; margin-bottom:.5rem; }
+.insight-tile-val { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; color:var(--text); }
+.insight-tile-lbl { font-size:.75rem; color:var(--text2); margin-top:.2rem; }
+
+/* ── ANIMATE CLASSES ── */
+.fade-up { opacity:0; transform:translateY(16px); transition:opacity .5s ease, transform .5s ease; }
+.fade-up.visible { opacity:1; transform:translateY(0); }
+
+/* ── RESPONSIVE ── */
+@media(max-width:1100px) {
+  .stats-row { grid-template-columns:repeat(2,1fr); }
+  .charts-grid { grid-template-columns:1fr 1fr; }
+  .charts-grid .glass-card:first-child { grid-column:1/-1; }
+  .home-hero { grid-template-columns:1fr; }
+  .hero-right { display:none; }
+  .topic-layout { grid-template-columns:1fr; }
+  .preview-panel { position:static; }
+}
+@media(max-width:900px) {
+  .profile-layout { grid-template-columns:1fr; }
+  .profile-card { position:static; }
+  .steps-grid { grid-template-columns:1fr 1fr; }
+  .step-card::after { display:none; }
+}
+@media(max-width:600px) {
+  .main { margin-left:0; }
+  .sidebar { display:none; }
+  .stats-row { grid-template-columns:1fr; }
+  .topic-categories { grid-template-columns:repeat(2,1fr); }
+  .form-steps { display:none; }
+  .page { padding:1.25rem 1rem; }
+  .topbar { padding:0 1rem; }
+  .winner-banner { flex-direction:column; }
+  .charts-grid { grid-template-columns:1fr; }
+  .steps-grid { grid-template-columns:1fr; }
+  .ideas-intro { grid-template-columns:1fr; }
+  .ideas-viz { display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div id="loadingScreen">
+  <div class="load-logo">⚡ IDSS</div>
+  <div class="load-bar"><div class="load-fill"></div></div>
+  <div class="load-txt">Initializing intelligent systems...</div>
+</div>
+
+<!-- Cosmos Canvas -->
+<canvas id="cosmosCanvas"></canvas>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="app">
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="logo-row">
+      <div class="sidebar-logo" onclick="showPage('home')">⚡</div>
+      <span class="sidebar-logo-text">IDSS</span>
+    </div>
+    <div class="nav-items">
+      <button class="nav-btn active" data-page="home" onclick="showPage('home',this)"><i class="fa fa-house"></i><span>Home</span></button>
+      <button class="nav-btn" data-page="generator" onclick="showPage('generator',this)"><i class="fa fa-wand-magic-sparkles"></i><span>Idea Generator</span></button>
+      <button class="nav-btn" data-page="ideas" onclick="showPage('ideas',this)"><i class="fa fa-lightbulb"></i><span>Generated Ideas</span></button>
+      <button class="nav-btn" data-page="results" onclick="showPage('results',this)"><i class="fa fa-chart-bar"></i><span>Analysis</span></button>
+      <button class="nav-btn" data-page="history" onclick="showPage('history',this)"><i class="fa fa-clock-rotate-left"></i><span>History</span></button>
+      <button class="nav-btn" data-page="team" onclick="showPage('team',this)"><i class="fa fa-users"></i><span>Team Voting</span></button>
+      <button class="nav-btn" data-page="profile" onclick="showPage('profile',this)"><i class="fa fa-user"></i><span>Profile</span></button>
+      <button class="nav-btn" data-page="admin" onclick="showPage('admin',this)"><i class="fa fa-shield-halved"></i><span>Admin</span></button>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="theme-dots" id="themeDots">
+        <div class="tdot active" style="background:#060818" onclick="setTheme('cosmic')" title="Cosmic"></div>
+        <div class="tdot" style="background:#0a1628" onclick="setTheme('ocean')" title="Ocean"></div>
+        <div class="tdot" style="background:#1a0a2e" onclick="setTheme('violet')" title="Violet"></div>
+        <div class="tdot" style="background:#0a1f0a" onclick="setTheme('emerald')" title="Emerald"></div>
+        <div class="tdot" style="background:#1f0f00" onclick="setTheme('ember')" title="Ember"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ═══ -->
+  <div class="main">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-title" id="topbarTitle"><span>⚡</span> IDSS — <span>Intelligent Decision Support</span></div>
+      <div class="topbar-actions">
+        <div class="notif-ring" onclick="toast('3 unread notifications','info')">
+          <i class="fa fa-bell"></i>
+          <div class="notif-dot"></div>
+        </div>
+        <div class="topbar-pill" onclick="showPage('profile',null)">
+          <span class="av">🚀</span>
+          <span>demo</span>
+          <i class="fa fa-chevron-down" style="font-size:.65rem"></i>
+        </div>
+      </div>
+    </header>
+
+    <!-- ════════════════ HOME PAGE ════════════════ -->
+    <div id="page-home" class="page active">
+      <div class="home-hero">
+        <div class="hero-left">
+          <div class="hero-badge">AI-Powered Project Idea Generator</div>
+          <h1 class="hero-h1">
+            Turn Any Topic Into
+            <span class="line2">Brilliant Project Ideas</span>
+            <span class="line3">Select a category, describe your goals, and let our intelligent engine generate ranked, scored, and actionable project ideas tailored to your budget, difficulty, and timeline.</span>
+          </h1>
+          <div class="hero-ctas">
+            <button class="btn btn-primary" onclick="showPage('generator',null)">
+              <i class="fa fa-wand-magic-sparkles"></i> Start Generating
+            </button>
+            <button class="btn btn-ghost" onclick="showPage('history',null)">
+              <i class="fa fa-clock-rotate-left"></i> View History
+            </button>
+          </div>
+          <div class="hero-features">
+            <div class="hf-item"><i class="fa fa-brain"></i> Rule-Based AI Engine</div>
+            <div class="hf-item"><i class="fa fa-chart-bar"></i> Multi-Criteria Scoring</div>
+            <div class="hf-item"><i class="fa fa-users"></i> Team Voting</div>
+            <div class="hf-item"><i class="fa fa-file-pdf"></i> PDF Export</div>
+          </div>
+        </div>
+        <div class="hero-right">
+          <div class="hero-visual">
+            <!-- Orbs -->
+            <div class="orb orb1"></div>
+            <div class="orb orb2"></div>
+            <div class="orb orb3"></div>
+            <!-- Hero SVG Animation -->
+            <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;position:relative;z-index:1">
+              <defs>
+                <radialGradient id="g1" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="rgba(0,212,255,0.3)"/>
+                  <stop offset="100%" stop-color="rgba(0,212,255,0)"/>
+                </radialGradient>
+                <radialGradient id="g2" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="rgba(167,139,250,0.25)"/>
+                  <stop offset="100%" stop-color="rgba(167,139,250,0)"/>
+                </radialGradient>
+                <filter id="glow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              </defs>
+              <!-- Central hub -->
+              <circle cx="200" cy="200" r="70" fill="rgba(0,212,255,0.04)" stroke="rgba(0,212,255,0.15)" stroke-width="1.5"/>
+              <circle cx="200" cy="200" r="45" fill="rgba(0,212,255,0.07)" stroke="rgba(0,212,255,0.2)" stroke-width="1.5"/>
+              <circle cx="200" cy="200" r="22" fill="rgba(0,212,255,0.15)"/>
+              <text x="200" y="207" text-anchor="middle" font-size="18" fill="white" font-family="sans-serif">⚡</text>
+              <!-- Orbit circles -->
+              <circle cx="200" cy="200" r="110" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="4 6"/>
+              <circle cx="200" cy="200" r="160" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1" stroke-dasharray="3 8"/>
+              <!-- Rotating orbit dots -->
+              <g style="transform-origin:200px 200px;animation:orbit1 6s linear infinite">
+                <circle cx="310" cy="200" r="10" fill="rgba(0,212,255,0.8)" filter="url(#glow)"/>
+                <circle cx="90" cy="200" r="7" fill="rgba(167,139,250,0.7)" filter="url(#glow)"/>
+              </g>
+              <g style="transform-origin:200px 200px;animation:orbit2 9s linear infinite">
+                <circle cx="200" cy="40" r="9" fill="rgba(255,179,71,0.8)" filter="url(#glow)"/>
+                <circle cx="200" cy="360" r="6" fill="rgba(0,229,160,0.7)" filter="url(#glow)"/>
+                <circle cx="360" cy="200" r="7" fill="rgba(255,107,107,0.7)" filter="url(#glow)"/>
+              </g>
+              <!-- Idea nodes -->
+              <g opacity="0.9">
+                <rect x="50" y="60" width="90" height="36" rx="10" fill="rgba(0,212,255,0.08)" stroke="rgba(0,212,255,0.2)" stroke-width="1"/>
+                <text x="95" y="83" text-anchor="middle" font-size="11" fill="rgba(0,212,255,0.9)" font-family="sans-serif" font-weight="600">Education</text>
+                <rect x="270" y="60" width="90" height="36" rx="10" fill="rgba(167,139,250,0.08)" stroke="rgba(167,139,250,0.2)" stroke-width="1"/>
+                <text x="315" y="83" text-anchor="middle" font-size="11" fill="rgba(167,139,250,0.9)" font-family="sans-serif" font-weight="600">Technology</text>
+                <rect x="50" y="310" width="90" height="36" rx="10" fill="rgba(255,179,71,0.08)" stroke="rgba(255,179,71,0.2)" stroke-width="1"/>
+                <text x="95" y="333" text-anchor="middle" font-size="11" fill="rgba(255,179,71,0.9)" font-family="sans-serif" font-weight="600">Business</text>
+                <rect x="270" y="310" width="90" height="36" rx="10" fill="rgba(0,229,160,0.08)" stroke="rgba(0,229,160,0.2)" stroke-width="1"/>
+                <text x="315" y="333" text-anchor="middle" font-size="11" fill="rgba(0,229,160,0.9)" font-family="sans-serif" font-weight="600">Health</text>
+              </g>
+              <!-- Connection lines -->
+              <line x1="140" y1="78" x2="162" y2="160" stroke="rgba(0,212,255,0.15)" stroke-width="1" stroke-dasharray="3 4"/>
+              <line x1="270" y1="78" x2="240" y2="160" stroke="rgba(167,139,250,0.15)" stroke-width="1" stroke-dasharray="3 4"/>
+              <line x1="140" y1="322" x2="162" y2="242" stroke="rgba(255,179,71,0.15)" stroke-width="1" stroke-dasharray="3 4"/>
+              <line x1="270" y1="322" x2="240" y2="242" stroke="rgba(0,229,160,0.15)" stroke-width="1" stroke-dasharray="3 4"/>
+              <!-- Score bars visual -->
+              <g transform="translate(150,285)">
+                <rect x="0" y="0" width="100" height="56" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                <text x="8" y="16" font-size="9" fill="rgba(255,255,255,0.4)" font-family="sans-serif">SCORE</text>
+                <rect x="8" y="22" width="60" height="4" rx="2" fill="rgba(0,212,255,0.3)"/>
+                <rect x="8" y="22" width="52" height="4" rx="2" fill="var(--teal)" opacity="0.8"/>
+                <rect x="8" y="31" width="60" height="4" rx="2" fill="rgba(255,255,255,0.06)"/>
+                <rect x="8" y="31" width="42" height="4" rx="2" fill="var(--violet)" opacity="0.8"/>
+                <rect x="8" y="40" width="60" height="4" rx="2" fill="rgba(255,255,255,0.06)"/>
+                <rect x="8" y="40" width="50" height="4" rx="2" fill="var(--amber)" opacity="0.8"/>
+                <text x="75" y="27" font-size="8" fill="rgba(0,212,255,0.9)" font-family="sans-serif" font-weight="700">8.7</text>
+                <text x="75" y="36" font-size="8" fill="rgba(167,139,250,0.9)" font-family="sans-serif" font-weight="700">7.0</text>
+                <text x="75" y="45" font-size="8" fill="rgba(255,179,71,0.9)" font-family="sans-serif" font-weight="700">8.3</text>
+              </g>
+            </svg>
+            <style>
+              @keyframes orbit1 { to { transform: rotate(360deg); } }
+              @keyframes orbit2 { to { transform: rotate(-360deg); } }
+            </style>
+          </div>
+        </div>
+      </div>
+
+      <!-- How It Works -->
+      <div class="section-divider"></div>
+      <div class="mb-1">
+        <div class="section-eyebrow">How It Works</div>
+        <h2 class="page-heading">Four Steps to Your <span class="accent">Best Project Idea</span></h2>
+        <p class="page-sub">Our intelligent engine analyzes your inputs and generates scored, ranked project ideas in seconds.</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card fade-up">
+          <div class="step-icon">🎯</div>
+          <div class="step-num">01</div>
+          <div class="step-title">Pick a Topic</div>
+          <div class="step-desc">Select a category and describe your challenge, constraints, and goals in plain language.</div>
+        </div>
+        <div class="step-card fade-up" style="animation-delay:.1s">
+          <div class="step-icon">🧠</div>
+          <div class="step-num">02</div>
+          <div class="step-title">AI Generates Ideas</div>
+          <div class="step-desc">Our rule-based engine analyzes 30+ factors to generate tailored, creative project ideas.</div>
+        </div>
+        <div class="step-card fade-up" style="animation-delay:.2s">
+          <div class="step-icon">📊</div>
+          <div class="step-num">03</div>
+          <div class="step-title">Score & Rank</div>
+          <div class="step-desc">Each idea is scored across 5 criteria — cost, time, difficulty, preference, and priority.</div>
+        </div>
+        <div class="step-card fade-up" style="animation-delay:.3s">
+          <div class="step-icon">🏆</div>
+          <div class="step-num">04</div>
+          <div class="step-title">Decide & Export</div>
+          <div class="step-desc">View the champion idea, compare all options, vote with your team, and export as PDF.</div>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="section-divider"></div>
+      <div class="stats-row" id="homeStats">
+        <div class="stat-tile fade-up">
+          <div class="stat-tile-icon ic-teal"><i class="fa fa-brain"></i></div>
+          <div class="stat-tile-val" data-target="12">0</div>
+          <div class="stat-tile-lbl">Problems Analyzed</div>
+          <div class="stat-tile-bg"><i class="fa fa-brain"></i></div>
+          <div class="stat-tile-bar bar-teal" style="width:75%"></div>
+        </div>
+        <div class="stat-tile fade-up" style="animation-delay:.08s">
+          <div class="stat-tile-icon ic-amber"><i class="fa fa-lightbulb"></i></div>
+          <div class="stat-tile-val" data-target="84">0</div>
+          <div class="stat-tile-lbl">Ideas Generated</div>
+          <div class="stat-tile-bg"><i class="fa fa-lightbulb"></i></div>
+          <div class="stat-tile-bar bar-amber" style="width:84%"></div>
+        </div>
+        <div class="stat-tile fade-up" style="animation-delay:.16s">
+          <div class="stat-tile-icon ic-green"><i class="fa fa-check-circle"></i></div>
+          <div class="stat-tile-val" data-target="9">0</div>
+          <div class="stat-tile-lbl">Decisions Made</div>
+          <div class="stat-tile-bg"><i class="fa fa-check-circle"></i></div>
+          <div class="stat-tile-bar bar-green" style="width:60%"></div>
+        </div>
+        <div class="stat-tile fade-up" style="animation-delay:.24s">
+          <div class="stat-tile-icon ic-violet"><i class="fa fa-users"></i></div>
+          <div class="stat-tile-val" data-target="47">0</div>
+          <div class="stat-tile-lbl">Team Votes Cast</div>
+          <div class="stat-tile-bg"><i class="fa fa-users"></i></div>
+          <div class="stat-tile-bar bar-violet" style="width:55%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ IDEA GENERATOR PAGE ════════════════ -->
+    <div id="page-generator" class="page">
+      <div class="mb-2">
+        <div class="section-eyebrow">Idea Generator</div>
+        <h1 class="page-heading">Define Your <span class="accent">Project Topic</span></h1>
+        <p class="page-sub">Fill in the details below. The more specific you are, the smarter and more tailored your ideas will be.</p>
+      </div>
+
+      <!-- Progress Steps -->
+      <div class="form-steps mb-2">
+        <div class="fstep active"><div class="fnum">1</div><span>Define Topic</span></div>
+        <div class="fline"></div>
+        <div class="fstep"><div class="fnum">2</div><span>Set Parameters</span></div>
+        <div class="fline"></div>
+        <div class="fstep"><div class="fnum">3</div><span>Review Ideas</span></div>
+        <div class="fline"></div>
+        <div class="fstep"><div class="fnum">4</div><span>Decision Report</span></div>
+      </div>
+
+      <div class="topic-layout">
+        <!-- Form -->
+        <div class="topic-form-area">
+          <!-- Category Picker -->
+          <div class="glass-card mb-15">
+            <div class="card-head"><h3><i class="fa fa-grid-2"></i> Choose a Category</h3></div>
+            <div class="card-body">
+              <div class="topic-categories" id="catGrid">
+                <div class="cat-tile selected" onclick="selectCat(this,'education')"><span class="cat-tile-icon">📚</span><div class="cat-tile-label">Education</div></div>
+                <div class="cat-tile" onclick="selectCat(this,'technology')"><span class="cat-tile-icon">💻</span><div class="cat-tile-label">Technology</div></div>
+                <div class="cat-tile" onclick="selectCat(this,'business')"><span class="cat-tile-icon">💼</span><div class="cat-tile-label">Business</div></div>
+                <div class="cat-tile" onclick="selectCat(this,'health')"><span class="cat-tile-icon">❤️</span><div class="cat-tile-label">Health</div></div>
+                <div class="cat-tile" onclick="selectCat(this,'environment')"><span class="cat-tile-icon">🌿</span><div class="cat-tile-label">Environment</div></div>
+                <div class="cat-tile" onclick="selectCat(this,'social')"><span class="cat-tile-icon">🤝</span><div class="cat-tile-label">Social</div></div>
+                <div class="cat-tile" onclick="selectCat(this,'finance')"><span class="cat-tile-icon">💰</span><div class="cat-tile-label">Finance</div></div>
+                <div class="cat-tile" onclick="selectCat(this,'data')"><span class="cat-tile-icon">📊</span><div class="cat-tile-label">Data Science</div></div>
+                <div class="cat-tile" onclick="selectCat(this,'mobile')"><span class="cat-tile-icon">📱</span><div class="cat-tile-label">Mobile App</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Topic Details -->
+          <div class="glass-card mb-15">
+            <div class="card-head"><h3><i class="fa fa-file-lines"></i> Topic Details</h3></div>
+            <div class="card-body">
+              <div class="form-field">
+                <div class="field-label"><i class="fa fa-heading"></i> Project Title</div>
+                <input type="text" class="text-input" id="topicTitle" placeholder="e.g. Build an AI-powered E-Learning Platform" value="Build an E-Learning Platform for Students" oninput="updatePreview()">
+              </div>
+              <div class="form-field">
+                <div class="field-label"><i class="fa fa-align-left"></i> Description & Goals</div>
+                <textarea class="text-input" id="topicDesc" rows="3" placeholder="Describe what you want to build, who it's for, and what problem it solves..." oninput="updatePreview()">We need a scalable, interactive platform for educators to upload courses and students to learn with gamification and AI-powered personalization.</textarea>
+              </div>
+              <div class="form-field">
+                <div class="field-label"><i class="fa fa-tags"></i> Keywords / Focus Areas</div>
+                <div class="tag-row" id="keywordTags">
+                  <div class="tag-chip selected" onclick="toggleTag(this)">AI / ML</div>
+                  <div class="tag-chip selected" onclick="toggleTag(this)">Mobile-first</div>
+                  <div class="tag-chip" onclick="toggleTag(this)">Gamification</div>
+                  <div class="tag-chip" onclick="toggleTag(this)">Analytics</div>
+                  <div class="tag-chip" onclick="toggleTag(this)">Real-time</div>
+                  <div class="tag-chip" onclick="toggleTag(this)">Open Source</div>
+                  <div class="tag-chip" onclick="toggleTag(this)">Blockchain</div>
+                  <div class="tag-chip" onclick="toggleTag(this)">IoT</div>
+                  <div class="tag-chip" onclick="toggleTag(this)">Cloud</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Parameters -->
+          <div class="glass-card mb-15">
+            <div class="card-head"><h3><i class="fa fa-sliders"></i> Project Parameters</h3></div>
+            <div class="card-body">
+              <div class="grid-3 mb-1">
+                <div class="form-field" style="margin:0">
+                  <div class="field-label"><i class="fa fa-wallet"></i> Budget</div>
+                  <div class="tag-row">
+                    <div class="tag-chip" onclick="selectParam('budget','low',this)">💚 Low</div>
+                    <div class="tag-chip selected" onclick="selectParam('budget','medium',this)">💛 Medium</div>
+                    <div class="tag-chip" onclick="selectParam('budget','high',this)">❤️ High</div>
+                  </div>
+                </div>
+                <div class="form-field" style="margin:0">
+                  <div class="field-label"><i class="fa fa-gauge"></i> Difficulty</div>
+                  <div class="tag-row">
+                    <div class="tag-chip" onclick="selectParam('diff','easy',this)">😊 Easy</div>
+                    <div class="tag-chip selected" onclick="selectParam('diff','medium',this)">😐 Medium</div>
+                    <div class="tag-chip" onclick="selectParam('diff','hard',this)">😤 Hard</div>
+                  </div>
+                </div>
+                <div class="form-field" style="margin:0">
+                  <div class="field-label"><i class="fa fa-flag"></i> Priority</div>
+                  <div class="tag-row">
+                    <div class="tag-chip" onclick="selectParam('pri','low',this)">⬇ Low</div>
+                    <div class="tag-chip" onclick="selectParam('pri','medium',this)">➡ Mid</div>
+                    <div class="tag-chip selected" onclick="selectParam('pri','high',this)">⬆ High</div>
+                    <div class="tag-chip" onclick="selectParam('pri','critical',this)">🚨 Crit</div>
+                  </div>
+                </div>
+              </div>
+              <div class="grid-2">
+                <div class="form-field" style="margin:0">
+                  <div class="field-label"><i class="fa fa-clock"></i> Timeframe</div>
+                  <select class="select-input" id="timeframe" onchange="updatePreview()">
+                    <option>1–2 Weeks</option>
+                    <option>1 Month</option>
+                    <option selected>3 Months</option>
+                    <option>6 Months</option>
+                    <option>1 Year</option>
+                    <option>Ongoing</option>
+                  </select>
+                </div>
+                <div class="form-field" style="margin:0">
+                  <div class="field-label"><i class="fa fa-users"></i> Team Size</div>
+                  <select class="select-input" onchange="updatePreview()">
+                    <option>Solo (1)</option>
+                    <option selected>Small (2–5)</option>
+                    <option>Medium (5–15)</option>
+                    <option>Large (15+)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:1rem;justify-content:flex-end">
+            <button class="btn btn-ghost" onclick="showPage('home',null)"><i class="fa fa-arrow-left"></i> Back</button>
+            <button class="btn btn-amber" onclick="generateIdeas()"><i class="fa fa-wand-magic-sparkles"></i> Generate Project Ideas</button>
+          </div>
+        </div>
+
+        <!-- Live Preview Panel -->
+        <div class="preview-panel">
+          <div class="preview-title">Live Preview</div>
+          <div id="previewCategory" class="mb-05">
+            <span class="cb cb-education" id="prevCatBadge">Education</span>
+          </div>
+          <div id="previewTagsRow" class="preview-tags mb-1">
+            <span class="tag-chip selected" style="font-size:.72rem">📚 Education</span>
+            <span class="tag-chip selected" style="font-size:.72rem">AI / ML</span>
+            <span class="tag-chip selected" style="font-size:.72rem">Mobile-first</span>
+          </div>
+          <div class="separator"></div>
+          <div class="preview-stat-rows">
+            <div class="psr"><span class="psr-key">Budget</span><div class="complexity-meter"><div class="cm-fill" id="prevBudgetBar" style="width:50%;background:var(--amber)"></div></div><span class="psr-val" id="prevBudget">Medium</span></div>
+            <div class="psr"><span class="psr-key">Difficulty</span><div class="complexity-meter"><div class="cm-fill" id="prevDiffBar" style="width:50%;background:var(--teal)"></div></div><span class="psr-val" id="prevDiff">Medium</span></div>
+            <div class="psr"><span class="psr-key">Priority</span><div class="complexity-meter"><div class="cm-fill" id="prevPriBar" style="width:65%;background:var(--coral)"></div></div><span class="psr-val" id="prevPri">High</span></div>
+            <div class="psr"><span class="psr-key">Timeline</span><span class="psr-val" id="prevTime">3 Months</span></div>
+          </div>
+          <div class="separator"></div>
+          <div class="insight-box">
+            <strong>💡 AI Insight:</strong> Based on your inputs, you'll likely get <strong>6–8 ideas</strong> across different complexity levels. Medium budget + AI keywords suggest strong candidates in <strong>EdTech and Adaptive Learning</strong> domains.
+          </div>
+          <div class="insights-row">
+            <div class="insight-tile"><div class="insight-tile-icon">🧩</div><div class="insight-tile-val">6–8</div><div class="insight-tile-lbl">Ideas Expected</div></div>
+            <div class="insight-tile"><div class="insight-tile-icon">⭐</div><div class="insight-tile-val">8.2+</div><div class="insight-tile-lbl">Est. Top Score</div></div>
+            <div class="insight-tile"><div class="insight-tile-icon">⚡</div><div class="insight-tile-val">~3s</div><div class="insight-tile-lbl">Analysis Time</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ IDEAS PAGE ════════════════ -->
+    <div id="page-ideas" class="page">
+      <div class="mb-2">
+        <div class="section-eyebrow">Step 3 of 4</div>
+        <h1 class="page-heading">Generated <span class="accent">Project Ideas</span></h1>
+      </div>
+      <!-- Problem context banner -->
+      <div class="ideas-intro">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);margin-bottom:.4rem">Problem Statement</div>
+          <div style="font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;color:var(--text);margin-bottom:.75rem" id="ideasProblemTitle">Build an E-Learning Platform for Students</div>
+          <div class="ideas-meta-pills" id="ideasMetaPills">
+            <div class="mpill"><i class="fa fa-tag"></i> Education</div>
+            <div class="mpill"><i class="fa fa-wallet"></i> Budget: Medium</div>
+            <div class="mpill"><i class="fa fa-gauge"></i> Difficulty: Medium</div>
+            <div class="mpill"><i class="fa fa-flag"></i> Priority: High</div>
+            <div class="mpill"><i class="fa fa-clock"></i> 3 Months</div>
+          </div>
+        </div>
+        <div class="ideas-viz">
+          <!-- Animated SVG illustration for ideas page -->
+          <svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="bulbGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="rgba(255,179,71,0.4)"/>
+                <stop offset="100%" stop-color="rgba(255,179,71,0)"/>
+              </radialGradient>
+            </defs>
+            <circle cx="90" cy="90" r="85" fill="url(#bulbGrad)" opacity="0.5">
+              <animate attributeName="r" values="80;90;80" dur="3s" repeatCount="indefinite"/>
+              <animate attributeName="opacity" values="0.3;0.6;0.3" dur="3s" repeatCount="indefinite"/>
+            </circle>
+            <circle cx="90" cy="90" r="50" fill="rgba(255,179,71,0.08)" stroke="rgba(255,179,71,0.2)" stroke-width="1.5"/>
+            <!-- Lightbulb -->
+            <circle cx="90" cy="78" r="22" fill="none" stroke="rgba(255,179,71,0.6)" stroke-width="2">
+              <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
+            </circle>
+            <rect x="82" y="97" width="16" height="6" rx="2" fill="rgba(255,179,71,0.5)"/>
+            <rect x="84" y="104" width="12" height="5" rx="2" fill="rgba(255,179,71,0.4)"/>
+            <line x1="90" y1="68" x2="90" y2="62" stroke="rgba(255,179,71,0.8)" stroke-width="2">
+              <animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite"/>
+            </line>
+            <line x1="90" y1="68" x2="96" y2="63" stroke="rgba(255,179,71,0.6)" stroke-width="1.5" transform="rotate(40,90,68)">
+              <animate attributeName="opacity" values="0;1;0" dur="1.5s" begin="0.3s" repeatCount="indefinite"/>
+            </line>
+            <line x1="90" y1="68" x2="96" y2="63" stroke="rgba(255,179,71,0.6)" stroke-width="1.5" transform="rotate(-40,90,68)">
+              <animate attributeName="opacity" values="0;1;0" dur="1.5s" begin="0.6s" repeatCount="indefinite"/>
+            </line>
+            <!-- Orbiting idea dots -->
+            <g style="transform-origin:90px 90px;animation:orbit1 5s linear infinite">
+              <circle cx="90" cy="25" r="6" fill="var(--teal)" opacity="0.7"/>
+            </g>
+            <g style="transform-origin:90px 90px;animation:orbit1 7s linear infinite reverse">
+              <circle cx="155" cy="90" r="5" fill="var(--violet)" opacity="0.7"/>
+              <circle cx="25" cy="90" r="4" fill="var(--green)" opacity="0.6"/>
+            </g>
+            <text x="90" y="145" text-anchor="middle" font-size="11" fill="rgba(255,179,71,0.6)" font-family="sans-serif" font-weight="600">
+              <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
+              IDEAS READY
+            </text>
+          </svg>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem">
+        <div style="font-size:.88rem;color:var(--text2)"><span id="ideasCount" style="color:var(--teal);font-weight:800;font-size:1.1rem">6</span> ideas generated</div>
+        <div class="flex-row">
+          <button class="btn btn-ghost btn-sm" onclick="showPage('generator',null)"><i class="fa fa-arrow-left"></i> Regenerate</button>
+          <button class="btn btn-primary btn-sm" onclick="showPage('results',null)"><i class="fa fa-trophy"></i> View Analysis</button>
+        </div>
+      </div>
+
+      <div class="ideas-grid" id="ideasGrid"></div>
+    </div>
+
+    <!-- ════════════════ RESULTS / ANALYSIS PAGE ════════════════ -->
+    <div id="page-results" class="page">
+      <div class="mb-2">
+        <div class="section-eyebrow">Decision Analysis</div>
+        <h1 class="page-heading">Ranked Results & <span class="accent">Recommendations</span></h1>
+      </div>
+
+      <div class="winner-banner" id="winnerBanner">
+        <div class="winner-icon">🏆</div>
+        <div class="winner-info">
+          <div class="winner-eyebrow">🎯 Top Recommendation</div>
+          <div class="winner-name" id="winnerName">AI-Powered Tutoring Platform</div>
+          <div class="winner-desc" id="winnerDesc">Leverage AI to provide personalized tutoring based on student performance analytics with adaptive learning paths.</div>
+        </div>
+        <div class="winner-score">
+          <div class="ws-big" id="winnerScore">8.6<sub>/10</sub></div>
+          <div class="ws-lbl">Overall Score</div>
+          <button class="btn btn-ghost btn-sm mt-1" onclick="exportPDF()"><i class="fa fa-file-pdf"></i> Export PDF</button>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="glass-card">
+          <div class="card-head"><h3><i class="fa fa-chart-bar"></i> Score Comparison</h3></div>
+          <div class="card-body"><canvas id="barChart" height="200"></canvas></div>
+        </div>
+        <div class="glass-card">
+          <div class="card-head"><h3><i class="fa fa-spider"></i> Criteria Breakdown</h3></div>
+          <div class="card-body"><canvas id="radarChart" height="200"></canvas></div>
+        </div>
+        <div class="glass-card">
+          <div class="card-head"><h3><i class="fa fa-chart-pie"></i> Score Distribution</h3></div>
+          <div class="card-body"><canvas id="pieChart" height="200"></canvas></div>
+        </div>
+      </div>
+
+      <div class="result-table-wrap">
+        <div class="rt-header">
+          <h3 style="font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;display:flex;align-items:center;gap:.5rem;color:var(--text)"><i class="fa fa-table" style="color:var(--teal)"></i> Comparison Table</h3>
+          <div class="rt-search">
+            <i class="fa fa-search" style="color:var(--text3);font-size:.8rem"></i>
+            <input type="text" placeholder="Filter ideas..." oninput="filterResultTable(this.value)">
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="dtable">
+            <thead>
+              <tr>
+                <th onclick="sortTable(0)">#</th>
+                <th>Idea</th>
+                <th onclick="sortTable(2)">Cost ↕</th>
+                <th onclick="sortTable(3)">Time ↕</th>
+                <th onclick="sortTable(4)">Diff ↕</th>
+                <th onclick="sortTable(5)">Pref ↕</th>
+                <th onclick="sortTable(6)">Pri ↕</th>
+                <th onclick="sortTable(7)">Total ↕</th>
+                <th>Votes</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="resultTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ HISTORY PAGE ════════════════ -->
+    <div id="page-history" class="page">
+      <div class="mb-2">
+        <div class="section-eyebrow">Decision History</div>
+        <h1 class="page-heading">All Your <span class="accent">Past Decisions</span></h1>
+        <p class="page-sub">Search, filter, and revisit every problem you've analyzed.</p>
+      </div>
+
+      <div class="hist-filters">
+        <div class="filter-search">
+          <i class="fa fa-search"></i>
+          <input type="text" placeholder="Search problems..." oninput="filterHistory(this.value)">
+        </div>
+        <select class="select-input" style="max-width:160px" onchange="filterHistory('')">
+          <option>All Categories</option>
+          <option>Education</option><option>Technology</option><option>Business</option>
+          <option>Health</option><option>Environment</option>
+        </select>
+        <select class="select-input" style="max-width:160px">
+          <option>All Priorities</option>
+          <option>Low</option><option>Medium</option><option>High</option><option>Critical</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="showPage('generator',null)"><i class="fa fa-plus"></i> New Problem</button>
+      </div>
+
+      <div class="history-grid" id="historyGrid"></div>
+    </div>
+
+    <!-- ════════════════ TEAM VOTING PAGE ════════════════ -->
+    <div id="page-team" class="page">
+      <div class="mb-2">
+        <div class="section-eyebrow">Collaborative Decision Making</div>
+        <h1 class="page-heading">Team <span class="accent">Voting</span></h1>
+        <p class="page-sub">Vote for your preferred ideas. The combined AI score + team votes determines the winning project.</p>
+      </div>
+
+      <div class="team-header-card">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);margin-bottom:.4rem">Current Problem</div>
+          <div style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:var(--text);margin-bottom:.75rem">Build an E-Learning Platform for Students</div>
+          <div class="flex-row">
+            <span class="cb cb-education">Education</span>
+            <span style="font-size:.82rem;color:var(--text2)"><i class="fa fa-users" style="color:var(--teal)"></i> 4 team members voting</span>
+            <span style="font-size:.82rem;color:var(--text2)"><i class="fa fa-chart-bar" style="color:var(--amber)"></i> 14 total votes cast</span>
+          </div>
+        </div>
+        <div>
+          <!-- Animated voting SVG -->
+          <svg width="120" height="100" viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="60" cy="45" r="30" fill="rgba(0,212,255,0.06)" stroke="rgba(0,212,255,0.15)" stroke-width="1.5">
+              <animate attributeName="r" values="28;32;28" dur="2.5s" repeatCount="indefinite"/>
+            </circle>
+            <text x="60" y="52" text-anchor="middle" font-size="22" fill="rgba(255,255,255,0.9)">👍</text>
+            <circle cx="25" cy="20" r="8" fill="rgba(0,212,255,0.15)" stroke="rgba(0,212,255,0.3)" stroke-width="1"/>
+            <text x="25" y="24" text-anchor="middle" font-size="9">🚀</text>
+            <circle cx="95" cy="22" r="8" fill="rgba(167,139,250,0.15)" stroke="rgba(167,139,250,0.3)" stroke-width="1"/>
+            <text x="95" y="26" text-anchor="middle" font-size="9">⚡</text>
+            <circle cx="18" cy="65" r="8" fill="rgba(0,229,160,0.15)" stroke="rgba(0,229,160,0.3)" stroke-width="1"/>
+            <text x="18" y="69" text-anchor="middle" font-size="9">🎯</text>
+            <circle cx="102" cy="65" r="8" fill="rgba(255,179,71,0.15)" stroke="rgba(255,179,71,0.3)" stroke-width="1"/>
+            <text x="102" y="69" text-anchor="middle" font-size="9">💡</text>
+            <line x1="33" y1="22" x2="45" y2="38" stroke="rgba(0,212,255,0.2)" stroke-width="1" stroke-dasharray="3 3">
+              <animate attributeName="opacity" values="0.2;0.8;0.2" dur="2s" repeatCount="indefinite"/>
+            </line>
+            <line x1="87" y1="24" x2="75" y2="38" stroke="rgba(167,139,250,0.2)" stroke-width="1" stroke-dasharray="3 3">
+              <animate attributeName="opacity" values="0.2;0.8;0.2" dur="2s" begin="0.5s" repeatCount="indefinite"/>
+            </line>
+            <text x="60" y="90" text-anchor="middle" font-size="9" fill="rgba(0,212,255,0.6)" font-family="sans-serif">TEAM VOTING LIVE</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="voting-grid" id="votingGrid"></div>
+    </div>
+
+    <!-- ════════════════ PROFILE PAGE ════════════════ -->
+    <div id="page-profile" class="page">
+      <div class="mb-2">
+        <div class="section-eyebrow">Account</div>
+        <h1 class="page-heading">My <span class="accent">Profile</span></h1>
+      </div>
+      <div id="profileAlert" class="alert alert-success" style="display:none"><i class="fa fa-check-circle"></i> Profile updated successfully!</div>
+      <div class="profile-layout">
+        <div class="profile-card">
+          <div class="profile-av-wrap">
+            <span class="profile-av" id="profileAvDisplay">🚀</span>
+            <div class="profile-av-ring"></div>
+          </div>
+          <div class="profile-name">Demo User</div>
+          <div class="profile-handle">@demo</div>
+          <div class="profile-role">User</div>
+          <div class="profile-stats">
+            <div><div class="pstat-val">12</div><div class="pstat-lbl">Problems</div></div>
+            <div><div class="pstat-val">9</div><div class="pstat-lbl">Decisions</div></div>
+            <div><div class="pstat-val">47</div><div class="pstat-lbl">Votes</div></div>
+          </div>
+          <div class="profile-info">
+            <div class="pinfo-row"><i class="fa fa-envelope"></i> demo@idss.com</div>
+            <div class="pinfo-row"><i class="fa fa-calendar"></i> Joined March 2024</div>
+            <div class="pinfo-row"><i class="fa fa-clock"></i> Last login: Today</div>
+          </div>
+        </div>
+        <div class="profile-main">
+          <div class="glass-card">
+            <div class="card-head"><h3><i class="fa fa-pen"></i> Edit Profile</h3></div>
+            <div class="card-body">
+              <div class="form-field">
+                <div class="field-label">Choose Avatar</div>
+                <div class="avatar-grid">
+                  <label class="av-opt"><input type="radio" name="avatar" value="🧑"><span>🧑</span></label>
+                  <label class="av-opt"><input type="radio" name="avatar" value="👩"><span>👩</span></label>
+                  <label class="av-opt"><input type="radio" name="avatar" value="🧑‍💻"><span>🧑‍💻</span></label>
+                  <label class="av-opt"><input type="radio" name="avatar" value="🚀" checked><span>🚀</span></label>
+                  <label class="av-opt"><input type="radio" name="avatar" value="⚡"><span>⚡</span></label>
+                  <label class="av-opt"><input type="radio" name="avatar" value="🎯"><span>🎯</span></label>
+                  <label class="av-opt"><input type="radio" name="avatar" value="💡"><span>💡</span></label>
+                  <label class="av-opt"><input type="radio" name="avatar" value="🌟"><span>🌟</span></label>
+                  <label class="av-opt"><input type="radio" name="avatar" value="🦁"><span>🦁</span></label>
+                  <label class="av-opt"><input type="radio" name="avatar" value="🐺"><span>🐺</span></label>
+                </div>
+              </div>
+              <div class="grid-2">
+                <div class="form-field" style="margin:0"><div class="field-label">Full Name</div><input type="text" class="text-input" value="Demo User"></div>
+                <div class="form-field" style="margin:0"><div class="field-label">Email</div><input type="email" class="text-input" value="demo@idss.com"></div>
+              </div>
+              <div class="mt-1"><button class="btn btn-primary btn-sm" onclick="saveProfile()"><i class="fa fa-save"></i> Save Changes</button></div>
+            </div>
+          </div>
+          <div class="glass-card">
+            <div class="card-head"><h3><i class="fa fa-lock"></i> Security</h3></div>
+            <div class="card-body">
+              <div class="grid-3">
+                <div class="form-field" style="margin:0"><div class="field-label">Current Password</div><input type="password" class="text-input" placeholder="••••••••"></div>
+                <div class="form-field" style="margin:0"><div class="field-label">New Password</div><input type="password" class="text-input" placeholder="••••••••"></div>
+                <div class="form-field" style="margin:0"><div class="field-label">Confirm</div><input type="password" class="text-input" placeholder="••••••••"></div>
+              </div>
+              <div class="mt-1"><button class="btn btn-ghost btn-sm" onclick="toast('Password updated!','success')"><i class="fa fa-key"></i> Update Password</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════ ADMIN PAGE ════════════════ -->
+    <div id="page-admin" class="page">
+      <div class="mb-2">
+        <div class="section-eyebrow">Administration</div>
+        <h1 class="page-heading">System <span class="accent">Admin Panel</span></h1>
+      </div>
+      <div class="admin-alert"><i class="fa fa-shield-halved"></i> You are viewing as Administrator. Changes affect all users.</div>
+      <div class="stats-row mb-2" id="adminStats">
+        <div class="stat-tile"><div class="stat-tile-icon ic-teal"><i class="fa fa-users"></i></div><div class="stat-tile-val" data-target="8">0</div><div class="stat-tile-lbl">Total Users</div><div class="stat-tile-bar bar-teal" style="width:40%"></div></div>
+        <div class="stat-tile"><div class="stat-tile-icon ic-amber"><i class="fa fa-brain"></i></div><div class="stat-tile-val" data-target="47">0</div><div class="stat-tile-lbl">Total Problems</div><div class="stat-tile-bar bar-amber" style="width:70%"></div></div>
+        <div class="stat-tile"><div class="stat-tile-icon ic-green"><i class="fa fa-check-circle"></i></div><div class="stat-tile-val" data-target="41">0</div><div class="stat-tile-lbl">Total Decisions</div><div class="stat-tile-bar bar-green" style="width:65%"></div></div>
+        <div class="stat-tile"><div class="stat-tile-icon ic-violet"><i class="fa fa-lightbulb"></i></div><div class="stat-tile-val" data-target="284">0</div><div class="stat-tile-lbl">Ideas Generated</div><div class="stat-tile-bar bar-violet" style="width:80%"></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1.25rem">
+        <div class="glass-card">
+          <div class="card-head"><h3><i class="fa fa-users"></i> User Management</h3><button class="btn btn-primary btn-xs" onclick="toast('User invited!','success')"><i class="fa fa-user-plus"></i> Invite User</button></div>
+          <div class="card-body" style="overflow-x:auto;padding:0">
+            <table class="dtable">
+              <thead><tr><th>Avatar</th><th>Username</th><th>Email</th><th>Role</th><th>Problems</th><th>Joined</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td style="padding:.8rem 1.1rem">👑</td><td><strong>admin</strong></td><td>admin@idss.com</td><td><span style="background:rgba(167,139,250,0.12);color:var(--violet);padding:.2rem .6rem;border-radius:6px;font-size:.72rem;font-weight:700">admin</span></td><td>5</td><td>Jan 2024</td><td><span style="font-size:.75rem;color:var(--text2)">You</span></td></tr>
+                <tr><td style="padding:.8rem 1.1rem">🚀</td><td><strong>demo</strong></td><td>demo@idss.com</td><td><span style="background:rgba(0,212,255,0.1);color:var(--teal);padding:.2rem .6rem;border-radius:6px;font-size:.72rem;font-weight:700">user</span></td><td>12</td><td>Mar 2024</td><td><button class="btn btn-xs" style="background:rgba(255,107,107,0.1);border:none;color:var(--coral);cursor:pointer;border-radius:6px;padding:.3rem .6rem;font-size:.78rem" onclick="toast('User removed','success')"><i class="fa fa-trash"></i></button></td></tr>
+                <tr><td style="padding:.8rem 1.1rem">🧑‍💻</td><td><strong>alice</strong></td><td>alice@company.com</td><td><span style="background:rgba(0,212,255,0.1);color:var(--teal);padding:.2rem .6rem;border-radius:6px;font-size:.72rem;font-weight:700">user</span></td><td>8</td><td>Feb 2024</td><td><button class="btn btn-xs" style="background:rgba(255,107,107,0.1);border:none;color:var(--coral);cursor:pointer;border-radius:6px;padding:.3rem .6rem;font-size:.78rem" onclick="toast('User removed','success')"><i class="fa fa-trash"></i></button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="glass-card">
+          <div class="card-head"><h3><i class="fa fa-brain"></i> Recent Problems</h3></div>
+          <div class="card-body" style="overflow-x:auto;padding:0">
+            <table class="dtable">
+              <thead><tr><th>User</th><th>Problem</th><th>Category</th><th>Priority</th><th>Ideas</th><th>Date</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr><td style="padding:.8rem 1.1rem">🚀 demo</td><td>E-Learning Platform</td><td><span class="cb cb-education">education</span></td><td><span class="pb pb-high">high</span></td><td>6</td><td>Mar 14</td><td><button class="btn btn-xs" onclick="showPage('results',null)" style="background:rgba(0,212,255,0.1);border:none;color:var(--teal);cursor:pointer;border-radius:6px;padding:.3rem .6rem;font-size:.78rem"><i class="fa fa-eye"></i></button></td></tr>
+                <tr><td style="padding:.8rem 1.1rem">🚀 demo</td><td>Cloud SaaS MVP</td><td><span class="cb cb-technology">technology</span></td><td><span class="pb pb-critical">critical</span></td><td>8</td><td>Mar 12</td><td><button class="btn btn-xs" onclick="showPage('results',null)" style="background:rgba(0,212,255,0.1);border:none;color:var(--teal);cursor:pointer;border-radius:6px;padding:.3rem .6rem;font-size:.78rem"><i class="fa fa-eye"></i></button></td></tr>
+                <tr><td style="padding:.8rem 1.1rem">🧑‍💻 alice</td><td>Patient Management Portal</td><td><span class="cb cb-health">health</span></td><td><span class="pb pb-high">high</span></td><td>5</td><td>Mar 10</td><td><button class="btn btn-xs" onclick="showPage('results',null)" style="background:rgba(0,212,255,0.1);border:none;color:var(--teal);cursor:pointer;border-radius:6px;padding:.3rem .6rem;font-size:.78rem"><i class="fa fa-eye"></i></button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+//  DATA & STATE
+// ══════════════════════════════════════════════════════════════════
+const state = {
+  category: 'education',
+  budget: 'medium',
+  difficulty: 'medium',
+  priority: 'high',
+  title: 'Build an E-Learning Platform for Students',
+  votes: {},
+};
+
+const IDEAS = [
+  {id:1,title:"AI-Powered Adaptive Tutoring Platform",desc:"Leverages machine learning to analyze student performance and automatically adjust content difficulty, pacing, and style. Provides personalized learning paths with real-time feedback.",tags:["AI/ML","Personalization","EdTech"],cost:7,time:8,diff:6,pref:9,pri:9,total:8.6,best:true,votes:14},
+  {id:2,title:"Interactive Gamified Learning App",desc:"Full-featured web + mobile app with gamification mechanics — XP points, badges, leaderboards, streak rewards and quest-based learning modules with progress tracking.",tags:["Gamification","Mobile","UX"],cost:8,time:7,diff:7,pref:8,pri:8,total:8.0,best:false,votes:9},
+  {id:3,title:"Progressive Web App (PWA) LMS",desc:"Offline-capable progressive web app that works seamlessly on all devices. Includes push notifications, background sync, and installable experience with sub-second load times.",tags:["PWA","Offline","Cross-platform"],cost:7,time:8,diff:7,pref:7,pri:7,total:7.8,best:false,votes:6},
+  {id:4,title:"Video Course Marketplace",desc:"Multi-instructor marketplace where educators upload, price and sell video courses. Students access content with certificates on completion, review systems, and discussion forums.",tags:["Marketplace","Video","Commerce"],cost:6,time:6,diff:6,pref:7,pri:6,total:7.0,best:false,votes:5},
+  {id:5,title:"Live Virtual Classroom Platform",desc:"Real-time collaborative classroom with video/audio, interactive whiteboard, breakout rooms, polls, and attendance tracking — built for synchronous online education.",tags:["Real-time","WebRTC","Collaboration"],cost:5,time:6,diff:8,pref:7,pri:6,total:7.2,best:false,votes:3},
+  {id:6,title:"Micro-Learning Mobile App",desc:"Bite-sized 5-minute daily lessons delivered through a mobile-first experience. Spaced repetition algorithm ensures long-term retention with minimal daily commitment.",tags:["Mobile","Micro-learning","Psychology"],cost:9,time:9,diff:5,pref:6,pri:5,total:7.4,best:false,votes:2},
+];
+
+const HISTORY = [
+  {title:"E-Learning Platform for Students",cat:"education",priority:"high",date:"Mar 14, 2024",ideas:6,best:"AI-Powered Adaptive Tutoring",score:"8.6",desc:"Scalable interactive platform with AI personalization.",time:"3 Months",budget:"medium"},
+  {title:"Cloud SaaS MVP Development",cat:"technology",priority:"critical",date:"Mar 12, 2024",ideas:8,best:"Microservices Architecture",score:"8.1",desc:"Subscription SaaS with multi-tenancy and CI/CD.",time:"6 Months",budget:"high"},
+  {title:"Patient Management Portal",cat:"health",priority:"high",date:"Mar 10, 2024",ideas:5,best:"Smart Patient System",score:"7.9",desc:"HIPAA-compliant patient records and scheduling.",time:"6 Months",budget:"high"},
+  {title:"CRM & Sales Automation",cat:"business",priority:"high",date:"Mar 8, 2024",ideas:7,best:"BI Dashboard Suite",score:"7.5",desc:"CRM with pipeline management and email automation.",time:"3 Months",budget:"medium"},
+  {title:"Carbon Emissions Tracker",cat:"environment",priority:"medium",date:"Mar 5, 2024",ideas:4,best:"Carbon Footprint Calculator",score:"8.2",desc:"Track and visualize personal/company CO₂ footprint.",time:"1 Month",budget:"low"},
+  {title:"Community Forum & Voting Platform",cat:"social",priority:"medium",date:"Mar 1, 2024",ideas:5,best:"Community Hub",score:"7.0",desc:"Reputation-based discussion boards with moderation.",time:"3 Months",budget:"low"},
+];
+
+// ══════════════════════════════════════════════════════════════════
+//  COSMOS CANVAS
+// ══════════════════════════════════════════════════════════════════
+(function initCosmos() {
+  const canvas = document.getElementById('cosmosCanvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, stars = [], nebulas = [], animId;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function makeStars(n) {
+    stars = [];
+    for (let i = 0; i < n; i++) {
+      stars.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 1.2 + 0.2,
+        a: Math.random(),
+        speed: Math.random() * 0.4 + 0.1,
+        twinkle: Math.random() * Math.PI * 2,
+      });
+    }
+  }
+
+  function makeNebulas() {
+    nebulas = [
+      {x:0.2,y:0.3,r:300,c:'rgba(0,212,255,0.018)'},
+      {x:0.8,y:0.6,r:250,c:'rgba(167,139,250,0.015)'},
+      {x:0.5,y:0.8,r:200,c:'rgba(255,179,71,0.012)'},
+    ];
+  }
+
+  function draw(t) {
+    ctx.clearRect(0,0,W,H);
+    nebulas.forEach(n => {
+      const grad = ctx.createRadialGradient(n.x*W,n.y*H,0,n.x*W,n.y*H,n.r);
+      grad.addColorStop(0, n.c);
+      grad.addColorStop(1,'transparent');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(n.x*W,n.y*H,n.r,0,Math.PI*2);
+      ctx.fill();
+    });
+    stars.forEach(s => {
+      s.twinkle += 0.02;
+      const alpha = s.a * (0.5 + 0.5 * Math.sin(s.twinkle));
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    animId = requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', () => { resize(); makeStars(200); });
+  resize(); makeStars(200); makeNebulas(); draw(0);
+})();
+
+// ══════════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════════════════════
+const PAGE_TITLES = {
+  home:'Home',generator:'Idea Generator',ideas:'Generated Ideas',
+  results:'Analysis',history:'History',team:'Team Voting',
+  profile:'Profile',admin:'Admin'
+};
+
+function showPage(name, btnEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pg = document.getElementById('page-' + name);
+  if (pg) pg.classList.add('active');
+
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+  else {
+    const match = document.querySelector(`.nav-btn[data-page="${name}"]`);
+    if (match) match.classList.add('active');
+  }
+
+  const tb = document.getElementById('topbarTitle');
+  if (tb) tb.innerHTML = `<span>⚡</span> IDSS — <span>${PAGE_TITLES[name]||name}</span>`;
+
+  if (name === 'ideas') renderIdeas();
+  if (name === 'results') { renderResultTable(); setTimeout(buildCharts, 80); }
+  if (name === 'history') renderHistory();
+  if (name === 'team') renderVoting();
+  if (name === 'admin' || name === 'home') animateCounters();
+
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  FORM INTERACTIONS
+// ══════════════════════════════════════════════════════════════════
+function selectCat(el, cat) {
+  document.querySelectorAll('.cat-tile').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state.category = cat;
+  document.getElementById('prevCatBadge').textContent = cat.charAt(0).toUpperCase()+cat.slice(1);
+  document.getElementById('prevCatBadge').className = `cb cb-${cat}`;
+  updatePreview();
+}
+
+function toggleTag(el) { el.classList.toggle('selected'); }
+
+const paramGroups = {};
+function selectParam(group, val, el) {
+  const row = el.parentElement;
+  row.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  state[group] = val;
+  const map = {low:[17,'var(--green)'],medium:[50,'var(--amber)'],high:[83,'var(--coral)'],critical:[100,'var(--violet)'],easy:[25,'var(--green)'],hard:[90,'var(--coral)']};
+  if (group==='budget') {
+    const m=map[val]||[50,'var(--amber)'];
+    document.getElementById('prevBudgetBar').style.width=m[0]+'%';
+    document.getElementById('prevBudgetBar').style.background=m[1];
+    document.getElementById('prevBudget').textContent=val.charAt(0).toUpperCase()+val.slice(1);
+  }
+  if (group==='diff') {
+    const m=map[val]||[50,'var(--teal)'];
+    document.getElementById('prevDiffBar').style.width=m[0]+'%';
+    document.getElementById('prevDiffBar').style.background=m[1];
+    document.getElementById('prevDiff').textContent=val.charAt(0).toUpperCase()+val.slice(1);
+  }
+  if (group==='pri') {
+    const m=map[val]||[50,'var(--coral)'];
+    document.getElementById('prevPriBar').style.width=m[0]+'%';
+    document.getElementById('prevPriBar').style.background=m[1];
+    document.getElementById('prevPri').textContent=val.charAt(0).toUpperCase()+val.slice(1);
+  }
+}
+
+function updatePreview() {
+  const t = document.getElementById('timeframe');
+  if (t) document.getElementById('prevTime').textContent = t.value;
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  GENERATE IDEAS (with animation)
+// ══════════════════════════════════════════════════════════════════
+function generateIdeas() {
+  const title = document.getElementById('topicTitle').value.trim();
+  if (!title) { toast('Please enter a project title!','error'); return; }
+
+  // Show loading state
+  const btn = event.currentTarget;
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Analyzing...';
+  btn.disabled = true;
+
+  state.title = title;
+  document.getElementById('ideasProblemTitle').textContent = title;
+
+  setTimeout(() => {
+    btn.innerHTML = orig;
+    btn.disabled = false;
+    toast('🧠 6 project ideas generated!','success');
+    showPage('ideas', null);
+  }, 1200);
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  RENDER IDEAS
+// ══════════════════════════════════════════════════════════════════
+function renderIdeas() {
+  const grid = document.getElementById('ideasGrid');
+  if (!grid) return;
+  const circ = 2 * Math.PI * 20;
+  grid.innerHTML = IDEAS.map((idea, i) => {
+    const pct = (idea.total / 10) * circ;
+    const barColors = ['var(--teal)','var(--violet)','var(--green)','var(--amber)','var(--coral)'];
+    return `
+    <div class="idea-card ${idea.best ? 'champion' : ''}" style="animation:pageIn .4s ease ${i*0.08}s both">
+      ${idea.best ? '<div class="champion-ribbon">🏆 Top Pick</div>' : ''}
+      <div class="idea-rank">
+        <div class="rank-num">${i+1}</div>
+        <div class="score-donut">
+          <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
+            <circle class="donut-bg" cx="25" cy="25" r="20"/>
+            <circle class="donut-fill" cx="25" cy="25" r="20"
+              stroke-dasharray="${((idea.total/10)*circ).toFixed(1)} ${circ.toFixed(1)}"/>
+          </svg>
+          <div class="donut-txt">${idea.total}</div>
+        </div>
+      </div>
+      <h3 class="idea-title">${idea.title}</h3>
+      <p class="idea-desc">${idea.desc}</p>
+      <div class="idea-tags-row">${idea.tags.map(t=>`<span class="itag">#${t}</span>`).join('')}</div>
+      <div class="criteria-bars">
+        ${[['Cost',idea.cost],['Time',idea.time],['Diff',idea.diff]].map(([l,v],ci)=>`
+        <div class="cbar-row">
+          <span class="cbar-lbl">${l}</span>
+          <div class="cbar-track"><div class="cbar-fill" style="width:${v*10}%;background:${barColors[ci]}"></div></div>
+          <span class="cbar-val">${v}</span>
+        </div>`).join('')}
+      </div>
+      <div class="idea-footer">
+        <button class="btn btn-ghost btn-sm" onclick="castVote(${idea.id})">
+          <i class="fa fa-thumbs-up"></i> Vote
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="showPage('results',null)">
+          <i class="fa fa-chart-bar"></i> Analysis
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  CHARTS
+// ══════════════════════════════════════════════════════════════════
+let _chartsBuilt = false;
+function buildCharts() {
+  if (_chartsBuilt) return;
+  _chartsBuilt = true;
+
+  const labels = IDEAS.map(i => i.title.length > 22 ? i.title.substr(0,20)+'…' : i.title);
+  const totals = IDEAS.map(i => i.total);
+  const palette = ['rgba(0,212,255,0.85)','rgba(167,139,250,0.85)','rgba(0,229,160,0.85)','rgba(255,179,71,0.85)','rgba(255,107,107,0.85)','rgba(99,212,255,0.85)'];
+  const cfg = {
+    plugins:{legend:{labels:{color:'#8899bb',font:{size:10}}}},
+    scales:{x:{ticks:{color:'#8899bb',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},
+            y:{ticks:{color:'#8899bb'},grid:{color:'rgba(255,255,255,0.04)'},beginAtZero:true,max:10}},
+  };
+
+  Chart.defaults.color = '#8899bb';
+  Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+
+  const bar = document.getElementById('barChart');
+  if (bar) new Chart(bar, {
+    type:'bar',
+    data:{labels,datasets:[{label:'Score',data:totals,backgroundColor:palette,borderRadius:6,borderWidth:0}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:cfg.scales}
+  });
+
+  const radar = document.getElementById('radarChart');
+  if (radar) new Chart(radar, {
+    type:'radar',
+    data:{
+      labels:['Cost','Time','Diff','Pref','Priority'],
+      datasets:[
+        {label:IDEAS[0].title.substr(0,16),data:[IDEAS[0].cost,IDEAS[0].time,IDEAS[0].diff,IDEAS[0].pref,IDEAS[0].pri],fill:true,backgroundColor:'rgba(0,212,255,0.12)',borderColor:'rgba(0,212,255,0.8)',pointBackgroundColor:'rgba(0,212,255,1)',borderWidth:2},
+        {label:IDEAS[1].title.substr(0,16),data:[IDEAS[1].cost,IDEAS[1].time,IDEAS[1].diff,IDEAS[1].pref,IDEAS[1].pri],fill:true,backgroundColor:'rgba(167,139,250,0.1)',borderColor:'rgba(167,139,250,0.7)',pointBackgroundColor:'rgba(167,139,250,1)',borderWidth:2},
+      ]
+    },
+    options:{responsive:true,scales:{r:{suggestedMin:0,suggestedMax:10,grid:{color:'rgba(255,255,255,0.06)'},ticks:{backdropColor:'transparent',color:'#4a5a7a'},pointLabels:{color:'#8899bb'}}},plugins:{legend:{labels:{color:'#8899bb',font:{size:10}}}}}
+  });
+
+  const pie = document.getElementById('pieChart');
+  if (pie) new Chart(pie, {
+    type:'doughnut',
+    data:{labels,datasets:[{data:totals,backgroundColor:palette,borderWidth:3,borderColor:'rgba(10,15,30,1)',hoverOffset:8}]},
+    options:{responsive:true,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:'#8899bb',padding:8,font:{size:10}}}}}
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  RESULT TABLE
+// ══════════════════════════════════════════════════════════════════
+function renderResultTable() {
+  const tbody = document.getElementById('resultTbody');
+  if (!tbody) return;
+  const colors = { high:'var(--green)', mid:'var(--amber)', low:'var(--coral)' };
+  const barColor = v => v>=7?colors.high:v>=5?colors.mid:colors.low;
+
+  tbody.innerHTML = IDEAS.map((idea,i) => `
+    <tr class="${idea.best?'champ-row':''}">
+      <td><div class="rank-badge-tbl">${i+1}</div></td>
+      <td>
+        <div style="font-weight:700;color:var(--text);font-size:.88rem">${idea.title}</div>
+        <div style="display:flex;gap:.25rem;margin-top:.3rem;flex-wrap:wrap">
+          ${idea.tags.map(t=>`<span style="font-size:.68rem;color:var(--text3)">#${t}</span>`).join('')}
+        </div>
+      </td>
+      ${[idea.cost,idea.time,idea.diff,idea.pref,idea.pri].map(v=>`
+      <td><div class="sb-cell"><div class="sb-bar"><div style="width:${v*10}%;background:${barColor(v)};height:100%;border-radius:2px"></div></div><span style="font-size:.82rem;font-weight:700;color:var(--text)">${v}</span></div></td>`).join('')}
+      <td><span class="total-val">${idea.total}</span></td>
+      <td><span style="font-size:.82rem;color:var(--text2)">${idea.votes}👍</span></td>
+      <td><span class="status-chip ${idea.best?'sc-best':'sc-opt'}">${idea.best?'✓ Best':'Option'}</span></td>
+    </tr>`).join('');
+}
+
+function filterResultTable(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('#resultTbody tr').forEach(r => {
+    r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+function sortTable(col) {
+  const t = document.getElementById('resultTbody');
+  if (!t) return;
+  Array.from(t.querySelectorAll('tr'))
+    .sort((a,b)=>(parseFloat(b.cells[col]?.textContent)||0)-(parseFloat(a.cells[col]?.textContent)||0))
+    .forEach(r=>t.appendChild(r));
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  HISTORY
+// ══════════════════════════════════════════════════════════════════
+function renderHistory() {
+  const grid = document.getElementById('historyGrid');
+  if (!grid) return;
+  grid.innerHTML = HISTORY.map((p,i) => `
+    <div class="hcard" style="animation:pageIn .4s ease ${i*0.07}s both">
+      <div class="hcard-top">
+        <div class="hcard-cats"><span class="cb cb-${p.cat}">${p.cat}</span><span class="pb pb-${p.priority}">${p.priority}</span></div>
+        <div class="hcard-date">${p.date}</div>
+      </div>
+      <div class="hcard-title">${p.title}</div>
+      <div class="hcard-desc">${p.desc}</div>
+      <div class="hcard-winner">
+        <span class="hw-lbl">🏆</span>
+        <span class="hw-name">${p.best}</span>
+        <span class="hw-score">${p.score}/10</span>
+      </div>
+      <div class="hcard-stats">
+        <div class="hstat"><i class="fa fa-lightbulb"></i> ${p.ideas} ideas</div>
+        <div class="hstat"><i class="fa fa-clock"></i> ${p.time}</div>
+        <div class="hstat"><i class="fa fa-wallet"></i> ${p.budget}</div>
+      </div>
+      <div class="hcard-actions">
+        <button class="btn btn-ghost btn-sm" onclick="showPage('ideas',null)"><i class="fa fa-lightbulb"></i> Ideas</button>
+        <button class="btn btn-primary btn-sm" onclick="showPage('results',null)"><i class="fa fa-chart-bar"></i> Results</button>
+        <button class="btn btn-xs" style="margin-left:auto;background:rgba(255,107,107,0.08);border:none;color:var(--coral);cursor:pointer;border-radius:8px;padding:.4rem .7rem;font-size:.8rem" onclick="this.closest('.hcard').style.opacity='.3';toast('Problem deleted','success')"><i class="fa fa-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+function filterHistory(q) {
+  if (!q) return;
+  q = q.toLowerCase();
+  document.querySelectorAll('.hcard').forEach(c => {
+    c.style.display = c.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  TEAM VOTING
+// ══════════════════════════════════════════════════════════════════
+function renderVoting() {
+  const grid = document.getElementById('votingGrid');
+  if (!grid) return;
+  const maxVotes = Math.max(...IDEAS.map(i => (state.votes[i.id] || 0) + i.votes));
+  grid.innerHTML = IDEAS.map((idea,i) => {
+    const myVote = state.votes[idea.id] || 0;
+    const totalVotes = idea.votes + myVote;
+    const pct = Math.round((totalVotes / maxVotes) * 100);
+    return `
+    <div class="vcard ${myVote?'my-voted':''}" style="animation:pageIn .4s ease ${i*0.07}s both">
+      <div class="vc-body">
+        <h3>${idea.title}</h3>
+        <p>${idea.desc.substr(0,120)}...</p>
+        <div class="idea-tags-row mb-05">${idea.tags.map(t=>`<span class="itag">#${t}</span>`).join('')}</div>
+        <div class="vote-meter">
+          <span class="vm-label"><i class="fa fa-thumbs-up"></i> Team Votes</span>
+          <span class="vm-count">${totalVotes}</span>
+        </div>
+        <div class="vote-bar-track"><div class="vote-bar-fill" style="width:${pct}%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--text3);margin-top:.35rem">
+          <span>AI Score: <strong style="color:var(--teal)">${idea.total}</strong></span>
+          <span>${pct}% of votes</span>
+        </div>
+      </div>
+      <div class="vc-footer">
+        ${myVote
+          ? `<button class="btn-voted-done"><i class="fa fa-check-circle"></i> You Voted</button>`
+          : `<button class="btn-vote-action" onclick="castVote(${idea.id})"><i class="fa fa-thumbs-up"></i> Vote for This Idea</button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function castVote(id) {
+  if (state.votes[id]) return;
+  state.votes[id] = 1;
+  renderVoting();
+  toast('Your vote has been recorded! 👍','success');
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  PROFILE
+// ══════════════════════════════════════════════════════════════════
+function saveProfile() {
+  const av = document.querySelector('[name="avatar"]:checked')?.value;
+  if (av) {
+    document.getElementById('profileAvDisplay').textContent = av;
+    document.querySelector('.topbar-pill .av').textContent = av;
+  }
+  const msg = document.getElementById('profileAlert');
+  if (msg) { msg.style.display='flex'; setTimeout(()=>msg.style.display='none',3500); }
+  toast('Profile saved successfully!','success');
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  THEME
+// ══════════════════════════════════════════════════════════════════
+const themes = {
+  cosmic:  {'--void':'#060818','--deep':'#0a0f1e','--surface':'#0d1428','--teal':'#00d4ff','--violet':'#a78bfa','--amber':'#ffb347','--green':'#00e5a0','--coral':'#ff6b6b'},
+  ocean:   {'--void':'#020c1b','--deep':'#0a1628','--surface':'#0d1f38','--teal':'#00ffcc','--violet':'#0088ff','--amber':'#ffd700','--green':'#00e5a0','--coral':'#ff6b6b'},
+  violet:  {'--void':'#0c0618','--deep':'#140a28','--surface':'#1a0f38','--teal':'#c084fc','--violet':'#e879f9','--amber':'#fbbf24','--green':'#86efac','--coral':'#f87171'},
+  emerald: {'--void':'#030f0a','--deep':'#051a0f','--surface':'#082418','--teal':'#00e5a0','--violet':'#34d399','--amber':'#fbbf24','--green':'#6ee7b7','--coral':'#fb7185'},
+  ember:   {'--void':'#100500','--deep':'#1a0a00','--surface':'#2a1100','--teal':'#ff8c00','--violet':'#ff6b6b','--amber':'#ffd700','--green':'#a3e635','--coral':'#fb923c'},
+};
+
+function setTheme(t) {
+  const vars = themes[t] || themes.cosmic;
+  const root = document.documentElement;
+  Object.entries(vars).forEach(([k,v]) => root.style.setProperty(k,v));
+  document.querySelectorAll('.tdot').forEach((d,i) => {
+    d.classList.toggle('active', ['cosmic','ocean','violet','emerald','ember'][i]===t);
+  });
+  // Rebuild charts with new colors
+  _chartsBuilt = false;
+  localStorage.setItem('idss_theme', t);
+  toast(`Theme: ${t.charAt(0).toUpperCase()+t.slice(1)}`,'info');
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  COUNTER ANIMATION
+// ══════════════════════════════════════════════════════════════════
+function animateCounters() {
+  document.querySelectorAll('[data-target]').forEach(el => {
+    if (el._done) return;
+    el._done = true;
+    const target = parseInt(el.dataset.target);
+    let v = 0;
+    const step = Math.max(1, Math.ceil(target / 40));
+    const t = setInterval(() => {
+      v = Math.min(v + step, target);
+      el.textContent = v;
+      if (v >= target) clearInterval(t);
+    }, 18);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  FADE-UP SCROLL OBSERVER
+// ══════════════════════════════════════════════════════════════════
+function initFadeUps() {
+  if (!('IntersectionObserver' in window)) {
+    document.querySelectorAll('.fade-up').forEach(e => e.classList.add('visible'));
+    return;
+  }
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+  }, {threshold:0.12});
+  document.querySelectorAll('.fade-up').forEach(e => obs.observe(e));
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  PDF EXPORT
+// ══════════════════════════════════════════════════════════════════
+function exportPDF() {
+  if (!window.jspdf) { toast('PDF export requires internet connection','error'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(20); doc.setTextColor(0,180,216);
+  doc.text('⚡ IDSS — Decision Report', 20, 22);
+  doc.setFontSize(12); doc.setTextColor(30,40,60);
+  doc.text(`Problem: ${state.title}`, 20, 36);
+  doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 44);
+  doc.setFontSize(11); doc.setTextColor(0,150,200);
+  doc.text('Project Ideas — Ranked by Score:', 20, 58);
+  let y = 70;
+  IDEAS.forEach((idea,i) => {
+    doc.setTextColor(30,40,60); doc.setFontSize(10);
+    doc.text(`${i+1}. [${idea.total}/10] ${idea.title}`, 22, y); y += 7;
+    doc.setTextColor(100,120,140); doc.setFontSize(9);
+    const lines = doc.splitTextToSize(idea.desc, 165);
+    lines.slice(0,2).forEach(line => { doc.text(line, 26, y); y += 6; });
+    y += 4; if (y > 260) { doc.addPage(); y = 20; }
+  });
+  doc.setTextColor(0,150,200); doc.setFontSize(10);
+  doc.text(`🏆 Best Solution: ${IDEAS[0].title} (${IDEAS[0].total}/10)`, 20, y+5);
+  doc.save('IDSS_Report.pdf');
+  toast('PDF exported successfully!','success');
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════════════════════════
+function toast(msg, type='success') {
+  const c = document.getElementById('toastContainer');
+  const icons = {success:'✅',error:'❌',warning:'⚠️',info:'💡'};
+  const borders = {success:'var(--green)',error:'var(--coral)',warning:'var(--amber)',info:'var(--teal)'};
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.style.borderLeftColor = borders[type]||'var(--teal)';
+  el.style.borderLeft = `3px solid ${borders[type]||'var(--teal)'}`;
+  el.innerHTML = `<span class="toast-icon">${icons[type]||'ℹ️'}</span><span>${msg}</span><div class="toast-bar" style="background:${borders[type]}"></div>`;
+  c.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('removing');
+    setTimeout(() => el.remove(), 350);
+  }, 3200);
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  // Hide loading screen
+  setTimeout(() => {
+    const ls = document.getElementById('loadingScreen');
+    if (ls) { ls.classList.add('hide'); setTimeout(() => ls.remove(), 600); }
+    animateCounters();
+    initFadeUps();
+  }, 1400);
+
+  // Restore theme
+  const savedTheme = localStorage.getItem('idss_theme');
+  if (savedTheme && themes[savedTheme]) setTheme(savedTheme);
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    if (e.key==='Escape') {
+      document.getElementById('sidebar').classList.remove('expanded');
+    }
+  });
+});
+</script>
+</body>
+</html>
